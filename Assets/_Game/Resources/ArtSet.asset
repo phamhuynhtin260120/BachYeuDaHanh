@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33003112c922a4d97976b54c94b999c8, type: 3}
+  m_Name: ArtSet
+  m_EditorClassIdentifier: Assembly-CSharp::BachYeu.ArtSet
+  PlayerFox: {fileID: 3242906568067787087, guid: f3ecca35d7f294f21978e9b1ce32f5a5, type: 3}
+  PlayerTengu: {fileID: 7987977288164884396, guid: 7598d7a0d2ea74e31b0affc0ef065657, type: 3}
+  Ghost: {fileID: 0}
+  Umbrella: {fileID: 0}
+  Heavy: {fileID: 0}
+  Elite: {fileID: 0}
+  Cat: {fileID: 0}
+  King: {fileID: 0}
+  Environment: {fileID: 0}
