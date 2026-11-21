@@ -12,12 +12,42 @@ namespace BachYeu {
     static Shader LitShader => _lit ? _lit : _lit = Shader.Find("Universal Render Pipeline/Simple Lit");
     static Shader UnlitShader => _unlit ? _unlit : _unlit = Shader.Find("Universal Render Pipeline/Unlit");
 
+    // Template materials in Resources/GfxTemplates keep the shaders (and their keyword variants)
+    // in player builds. Shader.Find alone would let the build strip them and draw everything pink.
+    public const string TemplateDir = "GfxTemplates";
+    static Material _tLit, _tLitEmissive, _tUnlit, _tFade;
+    static bool _templatesLoaded;
+
+    static void LoadTemplates() {
+      if (_templatesLoaded) return;
+      _templatesLoaded = true;
+      _tLit = Resources.Load<Material>(TemplateDir + "/Lit");
+      _tLitEmissive = Resources.Load<Material>(TemplateDir + "/LitEmissive");
+      _tUnlit = Resources.Load<Material>(TemplateDir + "/Unlit");
+      _tFade = Resources.Load<Material>(TemplateDir + "/Fade");
+    }
+
     public static void ResetCaches() {
       _litCache.Clear();
       _unlitCache.Clear();
       _fadeShared = null;
       _cone = _disc = _ring = _quad = null;
       _mpb = null;
+      _templatesLoaded = false;
+      _tLit = _tLitEmissive = _tUnlit = _tFade = null;
+    }
+
+    /// <summary>Configures a material as transparent Unlit (used by the Editor to create the Fade template too).</summary>
+    public static void MakeFade(Material m) {
+      m.SetFloat("_Surface", 1f);
+      m.SetFloat("_Blend", 0f);
+      m.SetFloat("_Cull", 0f);
+      m.SetFloat("_ZWrite", 0f);
+      m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+      m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+      m.SetOverrideTag("RenderType", "Transparent");
+      m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+      m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
     }
 
     public static Color Hex(string hex) {
@@ -35,7 +65,10 @@ namespace BachYeu {
 
     /// <summary>A new lit material instance (safe to tint, e.g. for hit flash).</summary>
     public static Material NewLit(Color c, Color? emission = null) {
-      var m = new Material(LitShader);
+      LoadTemplates();
+      var template = emission.HasValue ? (_tLitEmissive ? _tLitEmissive : _tLit) : _tLit;
+      var m = template ? new Material(template) : new Material(LitShader);
+      if (!emission.HasValue) m.DisableKeyword("_EMISSION");
       m.SetColor("_BaseColor", c);
       m.SetFloat("_Smoothness", 0f);
       if (emission.HasValue) {
@@ -47,7 +80,8 @@ namespace BachYeu {
 
     public static Material Unlit(Color c) {
       if (_unlitCache.TryGetValue(c, out var m)) return m;
-      m = new Material(UnlitShader);
+      LoadTemplates();
+      m = _tUnlit ? new Material(_tUnlit) : new Material(UnlitShader);
       m.SetColor("_BaseColor", c);
       _unlitCache[c] = m;
       return m;
@@ -57,16 +91,10 @@ namespace BachYeu {
     public static Material Fade {
       get {
         if (_fadeShared) return _fadeShared;
-        var m = new Material(UnlitShader);
-        m.SetFloat("_Surface", 1f);
-        m.SetFloat("_Blend", 0f);
-        m.SetFloat("_Cull", 0f);
-        m.SetFloat("_ZWrite", 0f);
-        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        m.SetOverrideTag("RenderType", "Transparent");
-        m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-        m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        LoadTemplates();
+        Material m;
+        if (_tFade) m = new Material(_tFade);
+        else { m = new Material(UnlitShader); MakeFade(m); }
         _fadeShared = m;
         return m;
       }

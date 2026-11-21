@@ -23,13 +23,17 @@ namespace BachYeu.EditorTools {
         EditorUtility.DisplayDialog("Tạo player", "Chọn một prefab model trong cửa sổ Project trước.", "OK");
         return;
       }
-      int choice = EditorUtility.DisplayDialogComplex("Tạo player", $"Dùng '{src.name}' cho mặt nạ nào?", "Hồ Ly", "Huỷ", "Tengu");
-      if (choice == 1) return;
-      var prefab = CreatePlayer(AssetDatabase.GetAssetPath(src), choice == 0 ? "Fox" : "Tengu");
+      var masks = new[] { "Fox", "Tengu", "HaBa", "QuyDa" };
+      var names = new[] { "Hồ Ly", "Tengu", "Hà Bá", "Quỷ Đá" };
+      int pick = -1;
+      for (int i = 0; i < masks.Length && pick < 0; i++)
+        if (EditorUtility.DisplayDialog("Tạo player", $"Dùng '{src.name}' cho mặt nạ {names[i]}?", "Đúng", "Không, xem mặt nạ khác")) pick = i;
+      if (pick < 0) return;
+      var prefab = CreatePlayer(AssetDatabase.GetAssetPath(src), masks[pick]);
       Selection.activeObject = prefab;
     }
 
-    /// <summary>Create controller + prefab variant from a model prefab and assign it to ArtSet. mask = "Fox" or "Tengu".</summary>
+    /// <summary>Create controller + prefab variant from a model prefab and assign it to ArtSet. mask = "Fox", "Tengu", "HaBa" or "QuyDa".</summary>
     public static GameObject CreatePlayer(string sourcePrefabPath, string mask) {
       var source = AssetDatabase.LoadAssetAtPath<GameObject>(sourcePrefabPath);
       if (!source) throw new System.ArgumentException("Không tìm thấy prefab: " + sourcePrefabPath);
@@ -52,7 +56,12 @@ namespace BachYeu.EditorTools {
         var art = AssetDatabase.LoadAssetAtPath<ArtSet>("Assets/_Game/Resources/ArtSet.asset");
         if (art) {
           Undo.RecordObject(art, "Assign player model");
-          if (mask == "Fox") art.PlayerFox = prefab; else art.PlayerTengu = prefab;
+          switch (mask) {
+            case "Fox": art.PlayerFox = prefab; break;
+            case "HaBa": art.PlayerHaBa = prefab; break;
+            case "QuyDa": art.PlayerQuyDa = prefab; break;
+            default: art.PlayerTengu = prefab; break;
+          }
           EditorUtility.SetDirty(art);
           AssetDatabase.SaveAssets();
         }

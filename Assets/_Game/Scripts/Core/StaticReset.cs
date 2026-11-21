@@ -17,6 +17,14 @@ namespace BachYeu {
       GameInput.Joystick = Vector2.zero;
       GameInput.AttackButtonHeld = false;
       GameInput.ClearAll();
+      GameSettings.ResetSession();
+      Profile.ResetSession();
+      Story.ResetSession();
+      Tutorial.ResetSession();
+      Quests.ResetSession();
+      Achievements.ResetSession();
+      MenuFlow.ResetSession();
+      LocalProfile.ResetSession();
     }
   }
 }

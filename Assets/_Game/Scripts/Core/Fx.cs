@@ -187,7 +187,7 @@ namespace BachYeu {
 
     // ---------- projectiles (visual + optional caster-side hit) ----------
     class Orb : Item {
-      public Fx Owner; public Transform T; public Vector3 V; public Enemy Target; public Action<Enemy> OnHit; public int Trail;
+      public Fx Owner; public Transform T; public Vector3 V; public Enemy Target; public Action<Enemy> OnHit; public int Trail; public bool Fancy;
       public override bool Tick(float dt) {
         if (Target == null || !Target.Alive) Target = Enemy.Nearest(T.position, 12f);
         if (Target != null) {
@@ -195,12 +195,12 @@ namespace BachYeu {
           V = Vector3.Lerp(V, to.normalized * 13f, Mathf.Min(1, dt * 5));
           if (to.magnitude < Target.Radius + .4f) {
             OnHit?.Invoke(Target);
-            Owner.Burst(T.position, Fire, 8, 2.5f);
+            if (!ArtSet.Play(GameFx.FoxOrbHit, T.position)) Owner.Burst(T.position, Fire, 8, 2.5f);
             return false;
           }
         }
         T.position += V * dt;
-        if (++Trail % 3 == 0) Owner.Burst(T.position, Gfx.Hex("#ffc27a"), 1, .6f);
+        if (!Fancy && ++Trail % 3 == 0) Owner.Burst(T.position, Gfx.Hex("#ffc27a"), 1, .6f);
         return true;
       }
       public override void Kill() => Destroy(T.gameObject);
@@ -208,8 +208,10 @@ namespace BachYeu {
 
     public void FoxOrb(Vector3 from, Vector3 forward, Enemy target, Action<Enemy> onHit) {
       var go = Gfx.Prim(PrimitiveType.Sphere, transform, from + Vector3.up * 1.2f, Vector3.one * .44f, Gfx.Unlit(Fire));
+      bool fancy = ArtSet.Attach(GameFx.FoxOrbTrail, go.transform);
+      if (fancy) go.GetComponent<Renderer>().enabled = false;
       var v = new Vector3(UnityEngine.Random.Range(-3f, 3f), 3f, UnityEngine.Random.Range(-3f, 3f)) + forward * 4f;
-      _items.Add(new Orb { Owner = this, T = go.transform, V = v, Target = target, OnHit = onHit, Life = 2.5f, Max = 2.5f });
+      _items.Add(new Orb { Owner = this, Fancy = fancy, T = go.transform, V = v, Target = target, OnHit = onHit, Life = 2.5f, Max = 2.5f });
     }
 
     class Blade : Item {
@@ -227,6 +229,7 @@ namespace BachYeu {
     public void WindBlade(Vector3 from, Vector3 dir, Action<Enemy> onHit) {
       var go = Gfx.Prim(PrimitiveType.Cube, transform, from + dir + Vector3.up, new Vector3(1.6f, .08f, .3f), Gfx.Unlit(WindLight));
       go.transform.rotation = Quaternion.LookRotation(dir);
+      if (ArtSet.Attach(GameFx.WindBladeTrail, go.transform)) go.GetComponent<Renderer>().enabled = false;
       _items.Add(new Blade { T = go.transform, V = dir * 15f, OnHit = onHit, Life = .6f, Max = .6f });
     }
 
@@ -247,6 +250,8 @@ namespace BachYeu {
       center.y = 0;
       var go = Gfx.MeshObj(Gfx.Cone, transform, center + Vector3.up * 3.2f, new Vector3(5.2f, -3.2f, 5.2f), Gfx.Fade);
       var r = go.GetComponent<Renderer>();
+      var art = ArtSet.Current;
+      if (art && art.ReplacesBuiltIn(PlayerAvatar.FxKind.Tornado)) r.enabled = false; // the ArtSet prefab is the look
       _items.Add(new Tornado { T = go.transform, R = r, C = center, OnTickHit = onTickHit, OnPull = onPull, Life = 2.6f, Max = 2.6f });
     }
 
@@ -259,7 +264,7 @@ namespace BachYeu {
         var me = PlayerAvatar.Local;
         if (me != null && !me.Downed && Flat(me.transform.position, p) < 1.4f) {
           me.Heal(10);
-          I.Burst(p, Jade, 10, 2);
+          if (!ArtSet.Play(GameFx.HealOrbPickup, p)) I.Burst(p, Jade, 10, 2);
           return false;
         }
         return true;
@@ -270,6 +275,7 @@ namespace BachYeu {
     public void HealOrb(Vector3 pos) {
       pos.y = .7f;
       var go = Gfx.Prim(PrimitiveType.Sphere, transform, pos, new Vector3(.4f, .5f, .4f), Gfx.Unlit(Jade));
+      if (ArtSet.Attach(GameFx.HealOrbAura, go.transform)) go.GetComponent<Renderer>().enabled = false;
       _items.Add(new Heal { T = go.transform, Seed = UnityEngine.Random.value * 10, Life = 12, Max = 12 });
     }
 

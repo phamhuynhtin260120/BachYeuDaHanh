@@ -15,21 +15,38 @@ namespace BachYeu {
     };
 
     [Range(0, 3)] public int SeasonIndex;
+    [Tooltip("The scene already contains the arena art (e.g. Arena_HoSen). Skip ArtSet.Environment and the primitive island; keep petals, seasons, lighting and Tranh Đăng decor. Floor at y = 0, centered on the origin.")]
+    public bool UseSceneEnvironment;
 
     readonly List<Transform> _petals = new();
     Renderer _ground;
+    GameObject _path, _contestDecor, _env, _envContest;
+    int _mode = -1;
     readonly List<Renderer> _leaves = new();
 
+    public static ArenaBuilder I { get; private set; }
+
     void Awake() {
+      I = this;
       Build();
       ApplySeason(SeasonIndex);
     }
 
     void Build() {
       var root = transform;
+      if (UseSceneEnvironment) {
+        _envContest = GameObject.Find("ContestOnly"); // optional: Tranh Đăng-only art placed in the scene
+        BuildPetals(root);
+        return;
+      }
       var env = ArtSet.Current ? ArtSet.Current.Environment : null;
       if (env) {
-        AnimUtil.SpawnVisual(env, root);
+        // Keep the environment's colliders: players and yokai walk on them (GroundMover).
+        _env = Instantiate(env, root, false);
+        _env.transform.localPosition = Vector3.zero;
+        _env.transform.localRotation = Quaternion.identity;
+        Physics.SyncTransforms();
+        _envContest = _env.transform.Find("ContestOnly")?.gameObject;
         BuildPetals(root);
         return;
       }
@@ -38,6 +55,7 @@ namespace BachYeu {
       under.name = "Underside";
       var path = Gfx.Prim(PrimitiveType.Cube, root, new Vector3(0, .005f, 5), new Vector3(2.6f, .01f, 11), Gfx.Lit(Gfx.Hex("#d8cdb8")));
       path.name = "Path";
+      _path = path;
 
       // Torii gate at the far (+Z) end.
       var red = Gfx.Lit(Gfx.Hex("#b3392b"));
@@ -89,6 +107,44 @@ namespace BachYeu {
       }
     }
 
+    /// <summary>Tranh Đăng adds a river splitting the island, a bridge under Đèn Cầu and two team banks.</summary>
+    public void ApplyMode(int mode) {
+      if (mode == _mode) return;
+      _mode = mode;
+      bool contest = mode == Modes.Contest;
+      if (contest && _contestDecor == null) BuildContestDecor();
+      if (_contestDecor) _contestDecor.SetActive(contest);
+      if (_path) _path.SetActive(!contest);
+      if (_envContest) _envContest.SetActive(contest);
+    }
+
+    void BuildContestDecor() {
+      _contestDecor = new GameObject("TranhDang").gameObject;
+      var t = _contestDecor.transform;
+      t.SetParent(transform, false);
+      // Translucent ink-wash water: the floor pattern shows through.
+      var river = Gfx.Prim(PrimitiveType.Cube, t, new Vector3(0, .008f, 0), new Vector3(2.4f, .012f, 25), Gfx.Fade);
+      river.name = "River";
+      Gfx.SetTint(river.GetComponent<Renderer>(), new Color(.22f, .33f, .36f, .42f));
+      if (_envContest == null) { // the art environment brings its own bridge
+        var bridge = Gfx.Prim(PrimitiveType.Cube, t, new Vector3(Contest.Lanterns[2].x, .03f, Contest.Lanterns[2].z), new Vector3(4.2f, .05f, 3f), Gfx.Lit(Gfx.Hex("#8a6a4e")));
+        bridge.name = "Bridge";
+      }
+      var post = Gfx.Lit(Gfx.Hex("#4a3426"));
+      for (int team = 0; team < 2; team++) {
+        var b = Contest.Base[team];
+        var col = Contest.TeamColor[team];
+        var disc = Gfx.MeshObj(Gfx.Disc, t, b + new Vector3(0, .04f, 0), Vector3.one * 2.8f, Gfx.Fade);
+        disc.name = "Bank_" + team;
+        Gfx.SetTint(disc.GetComponent<Renderer>(), new Color(col.r, col.g, col.b, .28f));
+        foreach (var dz in new[] { -2.2f, 2.2f }) {
+          var x = b.x + (team == 0 ? -1.6f : 1.6f);
+          Gfx.Prim(PrimitiveType.Cylinder, t, new Vector3(x, 1.4f, b.z + dz), new Vector3(.12f, 1.4f, .12f), post);
+          Gfx.Prim(PrimitiveType.Cube, t, new Vector3(x + (team == 0 ? .35f : -.35f), 2.2f, b.z + dz), new Vector3(.7f, 1.2f, .05f), Gfx.Lit(col));
+        }
+      }
+    }
+
     public void ApplySeason(int i) {
       var s = Seasons[Mathf.Clamp(i, 0, 3)];
       if (_ground) _ground.sharedMaterial.SetColor("_BaseColor", s.Ground);
@@ -99,10 +155,10 @@ namespace BachYeu {
       RenderSettings.fog = true;
       RenderSettings.fogMode = FogMode.Linear;
       RenderSettings.fogColor = s.Bg;
-      RenderSettings.fogStartDistance = 22;
-      RenderSettings.fogEndDistance = 52;
-      RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-      RenderSettings.ambientLight = Gfx.Hex("#b9ad9c");
+      // The painted environment has far mountains: let them fade into mist instead of vanishing.
+      RenderSettings.fogStartDistance = _env || UseSceneEnvironment ? 28 : 22;
+      RenderSettings.fogEndDistance = _env || UseSceneEnvironment ? 85 : 52;
+      InkLook.Apply(i); // sun, ambient and post-processing for this season
       var cam = Camera.main;
       if (cam) { cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = s.Bg; }
     }

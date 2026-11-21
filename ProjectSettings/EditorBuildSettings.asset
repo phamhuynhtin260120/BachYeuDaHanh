@@ -6,14 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Game/Scenes/Arena_HoSen.unity
+    guid: aaf8afeb13a6d41b29d25b46623ce570
+  - enabled: 1
     path: Assets/_Game/Scenes/Prototype.unity
     guid: b495cc768e39546f39baaa262a23de39
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
+  - enabled: 0
     path: Assets/Photon/FusionDemos/Fusion-Intro-Shared/Scenes/FusionIntroShared.unity
     guid: 0c93e24ebcb1fed489eeaf2f36cfb925
+  - enabled: 1
+    path: Assets/_Game/Scenes/CharacterSelect.unity
+    guid: 6141fcdf2ac3c412092cb9aaa090e66e
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -349,6 +349,7 @@ MonoBehaviour:
   DirectorPrefab: {fileID: 8829310524416265305, guid: d32fc72646b8e4c6b9e2f28cadd2e93a, type: 3}
   MenuPrefab: {fileID: 7151208831868600933, guid: 89e57836835f44d5e8af45d48f5b935a, type: 3}
   HudPrefab: {fileID: 4108906417928648392, guid: 2f555c1722e434dad862aa47e6a6700e, type: 3}
+  LobbyPrefab: {fileID: 8121085038420150523, guid: ab015661efc224c3f8adb58b5a3057d9, type: 3}
   Arena: {fileID: 1387408307}
 --- !u!4 &1125462410
 Transform:
@@ -461,7 +462,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &1327651535
 Light:
   m_ObjectHideFlags: 0

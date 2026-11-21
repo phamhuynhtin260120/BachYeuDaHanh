@@ -13,7 +13,10 @@ namespace BachYeu {
     public static bool AttackButtonHeld;
     static readonly bool[] _pressed = new bool[5];
 
-    public static void Press(GameAction a) => _pressed[(int)a] = true;
+    /// <summary>Bit per GameAction pressed since the tutorial last cleared it.</summary>
+    public static int Used;
+
+    public static void Press(GameAction a) { _pressed[(int)a] = true; Used |= 1 << (int)a; }
 
     public static bool Consume(GameAction a) {
       if (!_pressed[(int)a]) return false;
@@ -25,6 +28,11 @@ namespace BachYeu {
       for (int i = 0; i < _pressed.Length; i++) _pressed[i] = false;
     }
 
+    static int _ping = -1;
+    public static void PressPing(int kind) => _ping = kind;
+    /// <summary>Returns the ping pressed since the last call (0..2), or -1.</summary>
+    public static int ConsumePing() { int p = _ping; _ping = -1; return p; }
+
     /// <summary>Call once per rendered frame from the local player.</summary>
     public static void PollKeyboard() {
       var k = Keyboard.current;
@@ -34,6 +42,9 @@ namespace BachYeu {
       if (k.qKey.wasPressedThisFrame || k.eKey.wasPressedThisFrame) Press(GameAction.Swap);
       if (k.spaceKey.wasPressedThisFrame || k.leftShiftKey.wasPressedThisFrame) Press(GameAction.Dash);
       if (k.uKey.wasPressedThisFrame || k.rKey.wasPressedThisFrame) Press(GameAction.Ult);
+      if (k.digit1Key.wasPressedThisFrame) PressPing(0);
+      if (k.digit2Key.wasPressedThisFrame) PressPing(1);
+      if (k.digit3Key.wasPressedThisFrame) PressPing(2);
     }
 
     /// <summary>Movement on the XZ plane: x = right, y = forward (+Z).</summary>

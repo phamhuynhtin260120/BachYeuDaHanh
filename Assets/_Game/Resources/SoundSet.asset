@@ -1,0 +1,157 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7621910757b184d87bb35a6de225926f, type: 3}
+  m_Name: SoundSet
+  m_EditorClassIdentifier: Assembly-CSharp::BachYeu.SoundSet
+  Sounds:
+  - Id: 0
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 1
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 2
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 3
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 4
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 5
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 6
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 7
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 8
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 9
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 10
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 11
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 12
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 13
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 14
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 15
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 16
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 17
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 18
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 19
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 20
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 21
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 22
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 23
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 24
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 25
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 26
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 27
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 28
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 29
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 30
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 31
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  - Id: 32
+    Clips: []
+    Volume: 1
+    PitchJitter: 0.06
+  Music:
+  - Id: 0
+    Clip: {fileID: 0}
+    Volume: 1
+  - Id: 1
+    Clip: {fileID: 0}
+    Volume: 1
+  - Id: 2
+    Clip: {fileID: 0}
+    Volume: 1

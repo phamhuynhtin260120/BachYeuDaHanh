@@ -33,6 +33,7 @@ namespace BachYeu {
     AiState _st;
     float _stT, _atkT = 3f, _sumT = 8f, _hitCd, _hopT, _hopCd;
     Vector3 _kb, _hopV, _chargeDir;
+    GroundMover _mover;
     bool _chargeHit;
 
     public static Enemy Nearest(Vector3 pos, float maxDist) {
@@ -48,6 +49,7 @@ namespace BachYeu {
 
     public override void Spawned() {
       All.Add(this);
+      Bestiary.NoteSeen(Type);
       var art = ArtSet.Current;
       var (prefab, extraScale) = art ? art.EnemyPrefab(Type) : (null, 1f);
       if (prefab) {
@@ -65,13 +67,18 @@ namespace BachYeu {
       }
       _model.localScale = Vector3.one * _baseScale * .05f;
       _lastPos = transform.position;
+      // Only the machine that runs the yokai walks it over the ground; others see the synced transform.
+      if (HasStateAuthority) _mover = GroundMover.Attach(gameObject, Mathf.Min(Radius, 1.2f), Type == EnemyType.King ? 3.2f : IsBoss ? 2.4f : 1.6f);
       if (Type == EnemyType.King) _atkT = 2.5f;
-      if (Fx.I) Fx.I.Burst(transform.position + Vector3.up * .5f, Fx.Ink, 8, 2);
+      if (!ArtSet.Play(IsBoss ? GameFx.BossSpawn : GameFx.EnemySpawn, transform.position) && Fx.I) Fx.I.Burst(transform.position + Vector3.up * .5f, Fx.Ink, 8, 2);
+      if (Type == EnemyType.Wisp && ArtSet.Attach(GameFx.WispAura, transform) && _model) _model.gameObject.SetActive(false);
+      if (IsBoss) ArtSet.Attach(GameFx.BossAura, transform);
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState) {
       All.Remove(this);
-      if (Fx.I) {
+      if (hasState && Hp <= 0) Bestiary.NoteSlain(Type);
+      if (!ArtSet.Play(IsBoss ? GameFx.BossDeath : GameFx.EnemyDeath, transform.position) && Fx.I) {
         Fx.I.Burst(transform.position + Vector3.up, IsBoss ? Gfx.Hex("#6b4a8a") : Fx.Ink, IsBoss ? 60 : 16, IsBoss ? 6 : 3.5f);
         Fx.I.Burst(transform.position + Vector3.up, Fx.I.PetalColor, 8, 3);
       }
@@ -89,7 +96,8 @@ namespace BachYeu {
       var dir = GameDirector.Instance;
       if (dir) {
         dir.RPC_HitFx(Object.Id, transform.position, dmg, big, from, killed, drop);
-        if (killed) dir.OnEnemyKilled(this);
+        dir.OnEnemyDamaged(this, dmg + Mathf.Min(0, Hp), from);
+        if (killed) dir.OnEnemyKilled(this, from);
       }
       if (killed) Runner.Despawn(Object);
     }
@@ -116,7 +124,8 @@ namespace BachYeu {
       if (director == null || director.State != RunState.Playing) return;
 
       _hitCd -= dt;
-      var p = transform.position;
+      var start = transform.position;
+      var p = start;
       var target = PlayerAvatar.NearestAlive(p);
       Vector3 to = target ? target.transform.position - p : Vector3.zero;
       to.y = 0;
@@ -132,6 +141,45 @@ namespace BachYeu {
         case EnemyType.Ghost:
           if (target && dist > .9f) p += n * spd * dt;
           break;
+
+        case EnemyType.Inkstone: // Nghiên mực yêu: keeps its distance and flings ink where the player stands
+          if (target) {
+            if (dist > 7f) p += n * spd * dt;
+            else if (dist < 4.5f) p -= n * spd * .8f * dt;
+            _atkT -= dt;
+            if (_atkT <= 0 && dist < 10f) {
+              _atkT = Rage ? 1.9f : 2.7f;
+              var at = target.transform.position + new Vector3(Random.Range(-.6f, .6f), 0, Random.Range(-.6f, .6f));
+              director.Telegraph(at, 1.3f, 1.05f, 10);
+            }
+          }
+          break;
+
+        case EnemyType.Shade: // Bóng không đèn: fast and hard to see (the hiding is done in Render)
+          if (target && dist > .9f) p += n * spd * dt;
+          break;
+
+        case EnemyType.Firecracker: // Pháo yêu: runs in, lights its fuse, and blows up (taking itself with it)
+          if (_st == AiState.Move) {
+            if (target) p += n * spd * dt;
+            if (target && dist < 1.7f) { _st = AiState.Wind; _stT = .9f; director.Telegraph(p, 2.2f, .9f, 20); }
+          } else {
+            face = false;
+            _stT -= dt;
+            if (_stT <= 0) { Hp = 0; Runner.Despawn(Object); return; }
+          }
+          break;
+
+        case EnemyType.Wisp: { // Ma Trơi ignores players and drifts to the lantern worth stealing
+          face = false;
+          var goal = director.WispGoal(p) - p; goal.y = 0;
+          if (goal.magnitude > .6f) {
+            var g = goal.normalized;
+            p += g * spd * dt;
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(g), dt * 6f);
+          }
+          break;
+        }
 
         case EnemyType.Umbrella:
         case EnemyType.Elite:
@@ -233,18 +281,30 @@ namespace BachYeu {
       }
       var fl = new Vector2(p.x, p.z);
       if (fl.magnitude > 12.8f) { fl = fl.normalized * 12.8f; p.x = fl.x; p.z = fl.y; }
-      p.y = 0;
-      transform.position = p;
+      if (_mover) p = _mover.Move(p - start, dt);
+      else { p.y = 0; transform.position = p; }
       if (face && target) {
         var look = target.transform.position - p; look.y = 0;
         if (look.sqrMagnitude > .01f) transform.rotation = Quaternion.LookRotation(look);
       }
 
       // Contact damage.
-      if (target && _st != AiState.Wind && _hitCd <= 0 && dist < Radius + .5f) {
+      if (target && EnemyStats.Contact(Type) > 0 && _st != AiState.Wind && _hitCd <= 0 && dist < Radius + .5f) {
         target.RPC_Hurt(EnemyStats.Contact(Type));
         _hitCd = 1f;
       }
+    }
+
+    // Bóng không đèn: only its ground mark shows until a player is close, or while it is being hit.
+    Renderer[] _shadeParts;
+    bool _shadeShown = true;
+    void UpdateShade() {
+      if (_shadeParts == null) _shadeParts = System.Array.FindAll(_model.GetComponentsInChildren<Renderer>(true), r => r.name != "Shadow");
+      var me = PlayerAvatar.Local;
+      bool show = _flash > 0 || (me && Fx.Flat(me.transform.position, transform.position) < 4.5f) || Hp <= 0;
+      if (show == _shadeShown) return;
+      _shadeShown = show;
+      foreach (var r in _shadeParts) if (r) r.enabled = show;
     }
 
     // ---------------- visuals (all clients) ----------------
@@ -266,7 +326,9 @@ namespace BachYeu {
         else if (Type == EnemyType.King) y = Mathf.Sin(_bob * 1.6f) * .2f;
         else if ((Type == EnemyType.Umbrella || Type == EnemyType.Elite) && speed > 1f) y = Mathf.Abs(Mathf.Sin(_bob * 7.5f)) * .7f;
       }
+      if (Type == EnemyType.Firecracker && !_custom && _st == AiState.Wind) y = Mathf.Abs(Mathf.Sin(_bob * 30f)) * .12f; // shaking before the blast
       _model.localPosition = new Vector3(0, y, 0);
+      if (Type == EnemyType.Shade && !_custom) UpdateShade();
 
       if (_custom) { if (_flash > 0) _flash -= dt; return; }
       if (_flash > 0) {

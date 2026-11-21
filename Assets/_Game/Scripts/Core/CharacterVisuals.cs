@@ -38,35 +38,31 @@ namespace BachYeu {
   public class PlayerVisual {
     public readonly Transform Root;
     readonly Models.Chibi _chibi;
-    readonly GameObject[] _models = new GameObject[2];
-    readonly Animator[] _anims = new Animator[2];
-    int _mask;
+    // One spawned model per distinct prefab; masks without their own model share one.
+    readonly System.Collections.Generic.Dictionary<GameObject, GameObject> _byPrefab = new();
+    GameObject _current;
+    Animator _anim;
 
     public bool IsCustom => _chibi == null;
-    public Animator Anim => _anims[_models[1] ? _mask : 0];
+    public Animator Anim => _anim;
 
     public PlayerVisual(Transform parent) {
       Root = new GameObject("Visual").transform;
       Root.SetParent(parent, false);
       var art = ArtSet.Current;
-      if (art && (art.PlayerFox || art.PlayerTengu)) {
-        var fox = art.PlayerFox ? art.PlayerFox : art.PlayerTengu;
-        var tengu = art.PlayerTengu ? art.PlayerTengu : art.PlayerFox;
-        _models[0] = AnimUtil.SpawnVisual(fox, Root);
-        if (tengu != fox) _models[1] = AnimUtil.SpawnVisual(tengu, Root);
-        for (int i = 0; i < 2; i++) if (_models[i]) _anims[i] = _models[i].GetComponentInChildren<Animator>();
-      } else {
+      if (!(art && (art.PlayerFox || art.PlayerTengu || art.PlayerHaBa || art.PlayerQuyDa)))
         _chibi = Models.BuildChibi(Root, Gfx.Hex("#c23a3a"), Gfx.Hex("#2b2420"));
-      }
     }
 
-    public void ApplyMask(int mask) {
-      _mask = mask;
-      if (_chibi != null) { Models.ApplyMask(_chibi, mask); return; }
-      if (_models[1]) {
-        _models[0].SetActive(mask == 0);
-        _models[1].SetActive(mask == 1);
-      }
+    /// <summary>Show the look for a mask id (Masks.Fox, Tengu, HaBa, QuyDa).</summary>
+    public void ApplyMask(int maskId) {
+      if (_chibi != null) { Models.ApplyMask(_chibi, maskId); return; }
+      var prefab = ArtSet.Current.PlayerModel(maskId);
+      if (!prefab) return;
+      if (!_byPrefab.TryGetValue(prefab, out var go)) { go = AnimUtil.SpawnVisual(prefab, Root); _byPrefab[prefab] = go; }
+      foreach (var kv in _byPrefab) kv.Value.SetActive(kv.Value == go);
+      _current = go;
+      _anim = go.GetComponentInChildren<Animator>();
     }
 
     public void SetDowned(bool downed) {

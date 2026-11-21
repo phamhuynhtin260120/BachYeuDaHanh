@@ -14,10 +14,306 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BachYeu.ArtSet
   PlayerFox: {fileID: 3242906568067787087, guid: f3ecca35d7f294f21978e9b1ce32f5a5, type: 3}
   PlayerTengu: {fileID: 7987977288164884396, guid: 7598d7a0d2ea74e31b0affc0ef065657, type: 3}
+  PlayerHaBa: {fileID: 4699021758550808335, guid: d51d8539db6c3429491da94ff0ea0af7, type: 3}
+  PlayerQuyDa: {fileID: 4197139850870719257, guid: e515b2e7a73974bb08a06df4c2b4bd17, type: 3}
   Ghost: {fileID: 0}
   Umbrella: {fileID: 0}
   Heavy: {fileID: 0}
   Elite: {fileID: 0}
   Cat: {fileID: 0}
   King: {fileID: 0}
-  Environment: {fileID: 0}
+  PlayerFx:
+  - Kind: 0
+    Prefab: {fileID: 1996079926692674, guid: fb101b1453aec9747a5ed7244075b1a2, type: 3}
+    Life: 0.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 1
+    Prefab: {fileID: 1236453127613114, guid: bfbc37d0bc0e8ff4082a8b2894b3a486, type: 3}
+    Life: 0.6
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 0.9
+  - Kind: 8
+    Prefab: {fileID: 1612411718768874, guid: 4ef343c2fedb6884aac07e8610d65212, type: 3}
+    Life: 0.8
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2.2
+  - Kind: 11
+    Prefab: {fileID: 1182614328576822, guid: 1205099e4d473fd46a9de5fcc1037aaa, type: 3}
+    Life: 1.2
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 2
+    Prefab: {fileID: 1789270911803724, guid: 3f0def245cefa134c838d34a7f6d2556, type: 3}
+    Life: 0.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 6
+    Prefab: {fileID: 6810844234100877735, guid: 88dd9c4a8854b804186fda4318305ba0, type: 3}
+    Life: 0.6
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 7
+    Prefab: {fileID: 1130446560849736, guid: c4d564b5d4682ad46b8621f0fa6f40d9, type: 3}
+    Life: 0.6
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 12
+    Prefab: {fileID: 1878968308926206, guid: c2053024f4730614f871bfcfa823ca86, type: 3}
+    Life: 1.5
+    FollowPlayer: 0
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.8
+  - Kind: 13
+    Prefab: {fileID: 1872147318604286, guid: 5bea49531fc500c408823a2e2863106f, type: 3}
+    Life: 0.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.1
+  - Kind: 14
+    Prefab: {fileID: 1282364566017586, guid: 38e2ad2405a73b94ca4acff97076788a, type: 3}
+    Life: 1
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.6
+  - Kind: 15
+    Prefab: {fileID: 4481419373420190473, guid: a1f3d2db3e03101408c646570eefe2e1, type: 3}
+    Life: 5
+    FollowPlayer: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 0.9
+  - Kind: 17
+    Prefab: {fileID: 1658448689254514, guid: 1d45734a67e531c43b87d8b56a4dcff5, type: 3}
+    Life: 1
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.6
+  - Kind: 16
+    Prefab: {fileID: 1586059801500780, guid: 883c04b4795669b468dac641ea3fb3a3, type: 3}
+    Life: 1.8
+    FollowPlayer: 0
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 3
+  - Kind: 18
+    Prefab: {fileID: 1044528419629608, guid: 3be98662c9e7ef5468cb9c4e11010dc7, type: 3}
+    Life: 0.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 19
+    Prefab: {fileID: 1341365785022538, guid: 49f4a2628a72b0846afe42d196c02e6c, type: 3}
+    Life: 4
+    FollowPlayer: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 21
+    Prefab: {fileID: 1535640691960112, guid: d79f03dd3c9b07c41a430faecdcdf500, type: 3}
+    Life: 0.8
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 20
+    Prefab: {fileID: 1481932562201786, guid: 7b11714ce9d7e1f47826b05270b779e1, type: 3}
+    Life: 1.2
+    FollowPlayer: 0
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.6
+  - Kind: 9
+    Prefab: {fileID: 1029544359644514, guid: aab2daf1fd2b23f4a9bdbbb38fc95704, type: 3}
+    Life: 0.4
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0.6, z: 0}
+    Scale: 2
+  - Kind: 10
+    Prefab: {fileID: 1651363388222792, guid: a32d87b33cadfed4b83eeaa564eb7724, type: 3}
+    Life: 0.6
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2
+  - Kind: 4
+    Prefab: {fileID: 1299586717950946, guid: 5740ae2e014a8b14886dad7e67951070, type: 3}
+    Life: 0.4
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0.8, z: 0}
+    Scale: 1.2
+  - Kind: 3
+    Prefab: {fileID: 1171190231128718, guid: d9467a10b94fb3b428cc539326c9579b, type: 3}
+    Life: 0.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 5
+    Prefab: {fileID: 1918476138427834, guid: 3e4e9c6a4ac7e10418454a21dd359975, type: 3}
+    Life: 2.5
+    FollowPlayer: 0
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 3
+  GameFx:
+  - Kind: 0
+    Prefab: {fileID: 1220213892471706, guid: 800cddb992d3f5e4eb2348b90447f4a7, type: 3}
+    Life: 0.5
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2
+  - Kind: 1
+    Prefab: {fileID: 1348390491135638, guid: d7d554880214e644bbbbfc89aa884b26, type: 3}
+    Life: 0.3
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 0.8
+  - Kind: 2
+    Prefab: {fileID: 1620636520166436, guid: 07757cf211bd45044a1f1917658b9e66, type: 3}
+    Life: 0.3
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2.5
+  - Kind: 3
+    Prefab: {fileID: 1348390491135638, guid: d7d554880214e644bbbbfc89aa884b26, type: 3}
+    Life: 0.5
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.8
+  - Kind: 4
+    Prefab: {fileID: 1269619656826376, guid: 5c734c7bc14483a4d9b880211468f63d, type: 3}
+    Life: 2
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2.5
+  - Kind: 5
+    Prefab: {fileID: 1550070467213342, guid: 2a2353cfb2e46494d9fdf34eb5129445, type: 3}
+    Life: 1.5
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 2.5
+  - Kind: 6
+    Prefab: {fileID: 1850291782047516, guid: 39e6808e995d14e46aae8b87bde2a278, type: 3}
+    Life: 0.6
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 7
+    Prefab: {fileID: 1850291782047516, guid: 39e6808e995d14e46aae8b87bde2a278, type: 3}
+    Life: 0.8
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 8
+    Prefab: {fileID: 1029683450922114, guid: 911d39b31e356794d971139c547d1e61, type: 3}
+    Life: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 9
+    Prefab: {fileID: 1701074268541622, guid: ec40dcc0df25c9c44bb4f938a05e1482, type: 3}
+    Life: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 10
+    Prefab: {fileID: 2811559171390492949, guid: 7ada66e14a4aec34292b67dabd608e9d, type: 3}
+    Life: 1.2
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 11
+    Prefab: {fileID: 1282723261638982, guid: d0014edc3649e5147976734cef091506, type: 3}
+    Life: 1.2
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 12
+    Prefab: {fileID: 1592372973558972, guid: 721cfe8018b2cd04abd0748143d2a312, type: 3}
+    Life: 0.8
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 13
+    Prefab: {fileID: 1327569613689390, guid: 13a7c7a8d1bb29943ae2fda15a8f1e5c, type: 3}
+    Life: 1.2
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 14
+    Prefab: {fileID: 1315764361558410, guid: f99c3ed97779c5b4eb026cb91d4e4933, type: 3}
+    Life: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 15
+    Prefab: {fileID: 1815412830321472, guid: ee12757bdecf74e49b5a91d5b8bf078b, type: 3}
+    Life: 0.5
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 16
+    Prefab: {fileID: 1535640691960112, guid: d79f03dd3c9b07c41a430faecdcdf500, type: 3}
+    Life: 0.6
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 17
+    Prefab: {fileID: 1373873258365392, guid: cd5def2bb4f6b4e4ab15ba0b6f35b29d, type: 3}
+    Life: 0.3
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.2
+  - Kind: 18
+    Prefab: {fileID: 1207179939759570, guid: 3cefa829969829542bf182f16e268213, type: 3}
+    Life: 1
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 19
+    Prefab: {fileID: 1839610603883104262, guid: 3fff46610e3e8a9448b12a4547cf04f4, type: 3}
+    Life: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  - Kind: 20
+    Prefab: {fileID: 1924214270427649882, guid: 7d1b9b65cc11d07488dcbc088a19a9a4, type: 3}
+    Life: 1
+    KeepBuiltIn: 0
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 0.8
+  - Kind: 21
+    Prefab: {fileID: 4810147065284388929, guid: 4c54d50648824f5458c75c4c17864a4f, type: 3}
+    Life: 1
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1.5
+  - Kind: 22
+    Prefab: {fileID: 1686359375265966, guid: 52ba85deb3f9e9c47987bb6123f14767, type: 3}
+    Life: 1
+    KeepBuiltIn: 1
+    Offset: {x: 0, y: 0, z: 0}
+    Scale: 1
+  Environment: {fileID: 4965686182974664388, guid: 96c922399a07c46dcba36bdc08ea8fa6, type: 3}

@@ -22,11 +22,16 @@ namespace BachYeu.EditorTools {
     const string ScenePath = Root + "/Scenes/Prototype.unity";
     const string HudPath = UiPrefabDir + "/HUD.prefab";
     const string MenuPath = UiPrefabDir + "/Menu.prefab";
+    const string LobbyPath = UiPrefabDir + "/Lobby.prefab";
+    const string TemplateDir = Root + "/Resources/" + Gfx.TemplateDir;
     const string RoundSpritePath = ArtDir + "/UI/Round.png";
     const string ArtSetPath = Root + "/Resources/ArtSet.asset";
 
     [MenuItem("Bách Yêu/Dựng scene prototype")]
     public static void Build() {
+      if (File.Exists(ScenePath) && !EditorUtility.DisplayDialog("Dựng scene prototype",
+            "Scene Prototype.unity đã có. Dựng lại sẽ ghi đè scene (mọi object bạn thêm vào scene sẽ mất).\n\nPrefab mạng, prefab UI và ArtSet đã có sẽ được giữ nguyên.",
+            "Ghi đè scene", "Huỷ")) return;
       Directory.CreateDirectory(PrefabDir);
       Directory.CreateDirectory(Root + "/Scenes");
 
@@ -46,6 +51,7 @@ namespace BachYeu.EditorTools {
       });
       BuildUiPrefabs(overwrite: false);
       EnsureArtSet();
+      EnsureGfxTemplates();
 
       var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -77,6 +83,7 @@ namespace BachYeu.EditorTools {
       launcher.Arena = arena;
       launcher.HudPrefab = AssetDatabase.LoadAssetAtPath<Hud>(HudPath);
       launcher.MenuPrefab = AssetDatabase.LoadAssetAtPath<MenuView>(MenuPath);
+      launcher.LobbyPrefab = AssetDatabase.LoadAssetAtPath<LobbyView>(LobbyPath);
 
       var es = new GameObject("EventSystem");
       es.AddComponent<EventSystem>();
@@ -93,7 +100,7 @@ namespace BachYeu.EditorTools {
     [MenuItem("Bách Yêu/Tạo lại prefab UI (ghi đè chỉnh sửa)")]
     static void RebuildUiMenu() {
       if (!EditorUtility.DisplayDialog("Tạo lại prefab UI",
-            "HUD.prefab và Menu.prefab sẽ bị ghi đè bằng bố cục mặc định. Mọi chỉnh sửa bạn đã làm trên hai prefab này sẽ mất.",
+            "HUD.prefab, Menu.prefab và Lobby.prefab sẽ bị ghi đè bằng bố cục mặc định (thủy mặc). Mọi chỉnh sửa bạn đã làm trên các prefab này sẽ mất.",
             "Ghi đè", "Huỷ")) return;
       BuildUiPrefabs(overwrite: true);
       WireExistingScene();
@@ -109,6 +116,7 @@ namespace BachYeu.EditorTools {
     /// <summary>Create HUD.prefab and Menu.prefab from the default code layout. Existing prefabs are kept unless overwrite is true.</summary>
     public static void BuildUiPrefabs(bool overwrite) {
       Directory.CreateDirectory(UiPrefabDir);
+      EnsureInkSprites();
       var round = EnsureRoundSprite();
       UiKit.RoundOverride = round;
       try {
@@ -126,6 +134,13 @@ namespace BachYeu.EditorTools {
           PrefabUtility.SaveAsPrefabAsset(canvas.gameObject, MenuPath);
           Object.DestroyImmediate(canvas.gameObject);
         }
+        if (overwrite || !File.Exists(LobbyPath)) {
+          var canvas = UiKit.Canvas("Lobby", 15);
+          var lobby = canvas.gameObject.AddComponent<LobbyView>();
+          lobby.BuildDefault((RectTransform)canvas.transform);
+          PrefabUtility.SaveAsPrefabAsset(canvas.gameObject, LobbyPath);
+          Object.DestroyImmediate(canvas.gameObject);
+        }
       } finally {
         UiKit.RoundOverride = null;
       }
@@ -141,8 +156,38 @@ namespace BachYeu.EditorTools {
       if (!launcher) return;
       launcher.HudPrefab = AssetDatabase.LoadAssetAtPath<Hud>(HudPath);
       launcher.MenuPrefab = AssetDatabase.LoadAssetAtPath<MenuView>(MenuPath);
+      launcher.LobbyPrefab = AssetDatabase.LoadAssetAtPath<LobbyView>(LobbyPath);
       EditorUtility.SetDirty(launcher);
       EditorSceneManager.SaveScene(scene);
+    }
+
+    const string InkSpriteDir = Root + "/Resources/" + UiKit.InkDir;
+
+    /// <summary>Ink-wash sprites (thủy mặc): import as UI sprites with 9-slice borders. Safe to call often.</summary>
+    public static void EnsureInkSprites() {
+      var borders = new System.Collections.Generic.Dictionary<string, Vector4> {
+        // Vector4 = left, bottom, right, top (pixels)
+        ["Brush"] = new(90, 0, 90, 0), ["BrushBar"] = new(40, 0, 40, 0), ["Lines"] = new(40, 20, 40, 20),
+        ["Seal"] = new(24, 24, 24, 24), ["SealLine"] = new(24, 24, 24, 24), ["Wash"] = new(110, 110, 110, 110),
+      };
+      if (!Directory.Exists(InkSpriteDir)) { Debug.LogWarning("[Bách Yêu] Chưa có thư mục " + InkSpriteDir); return; }
+      foreach (var file in Directory.GetFiles(InkSpriteDir, "*.png")) {
+        var path = file.Replace('\\', '/');
+        var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (!imp) continue;
+        var name = Path.GetFileNameWithoutExtension(path);
+        var border = borders.TryGetValue(name, out var b) ? b : Vector4.zero;
+        if (imp.textureType == TextureImporterType.Sprite && imp.spriteBorder == border && !imp.mipmapEnabled) continue;
+        imp.textureType = TextureImporterType.Sprite;
+        imp.spriteImportMode = SpriteImportMode.Single;
+        imp.spriteBorder = border;
+        imp.alphaIsTransparency = true;
+        imp.mipmapEnabled = false;
+        imp.wrapMode = TextureWrapMode.Clamp;
+        imp.maxTextureSize = 2048;
+        imp.SaveAndReimport();
+      }
+      UiKit.ResetInk();
     }
 
     static Sprite EnsureRoundSprite() {
@@ -173,8 +218,33 @@ namespace BachYeu.EditorTools {
       return art;
     }
 
+    /// <summary>Material templates that keep the URP shaders and keyword variants in player builds (see Gfx).</summary>
+    public static void EnsureGfxTemplates() {
+      Directory.CreateDirectory(TemplateDir);
+      void Make(string name, string shader, System.Action<Material> setup) {
+        var path = $"{TemplateDir}/{name}.mat";
+        if (File.Exists(path)) return;
+        var m = new Material(Shader.Find(shader));
+        setup?.Invoke(m);
+        AssetDatabase.CreateAsset(m, path);
+      }
+      Make("Lit", "Universal Render Pipeline/Simple Lit", m => m.SetFloat("_Smoothness", 0f));
+      Make("LitEmissive", "Universal Render Pipeline/Simple Lit", m => {
+        m.SetFloat("_Smoothness", 0f);
+        m.EnableKeyword("_EMISSION");
+        m.SetColor("_EmissionColor", Color.black);
+        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+      });
+      Make("Unlit", "Universal Render Pipeline/Unlit", null);
+      Make("Fade", "Universal Render Pipeline/Unlit", Gfx.MakeFade);
+      AssetDatabase.SaveAssets();
+    }
+
+    /// <summary>Creates a network prefab only if it does not exist yet, so your edits to it are never overwritten.</summary>
     static NetworkObject SaveNetworkPrefab(string name, System.Action<GameObject> setup) {
       var path = $"{PrefabDir}/{name}.prefab";
+      var existing = AssetDatabase.LoadAssetAtPath<NetworkObject>(path);
+      if (existing) return existing;
       var go = new GameObject(name);
       setup(go);
       var prefab = PrefabUtility.SaveAsPrefabAsset(go, path);

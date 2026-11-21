@@ -43,13 +43,19 @@ namespace BachYeu {
       return c;
     }
 
+    /// <summary>Placeholder look per mask id: robe and mask colors, fox ears, tengu nose.</summary>
     public static void ApplyMask(Chibi c, int mask) {
-      bool fox = mask == 0;
-      c.Robe.sharedMaterial.SetColor("_BaseColor", fox ? Gfx.Hex("#c23a3a") : Gfx.Hex("#2f5f8a"));
-      c.Face.sharedMaterial.SetColor("_BaseColor", fox ? Color.white : Gfx.Hex("#c0392b"));
-      foreach (var e in c.Ears) e.SetActive(fox);
-      c.Nose.SetActive(!fox);
-      c.Stripe.SetActive(fox);
+      var (robe, face) = mask switch {
+        Masks.Tengu => (Gfx.Hex("#2f5f8a"), Gfx.Hex("#c0392b")),
+        Masks.HaBa => (Gfx.Hex("#2f8f8a"), Gfx.Hex("#d8efe9")),
+        Masks.QuyDa => (Gfx.Hex("#6b5640"), Gfx.Hex("#9a8a76")),
+        _ => (Gfx.Hex("#c23a3a"), Color.white),
+      };
+      c.Robe.sharedMaterial.SetColor("_BaseColor", robe);
+      c.Face.sharedMaterial.SetColor("_BaseColor", face);
+      foreach (var e in c.Ears) e.SetActive(mask == Masks.Fox || mask == Masks.QuyDa); // Quỷ Đá: stubby horns
+      c.Nose.SetActive(mask == Masks.Tengu);
+      c.Stripe.SetActive(mask == Masks.Fox || mask == Masks.HaBa);
     }
 
     /// <summary>Builds a yokai model and returns the materials that should flash on hit.</summary>
@@ -113,6 +119,55 @@ namespace BachYeu {
           foreach (var s in new[] { -1f, 1f })
             Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(s * 1.5f, 1.6f, .2f), new Vector3(.36f, .17f, .36f), Gfx.NewLit(Gfx.Hex("#c0392b"), Gfx.Hex("#ff7a2a")));
           root.localScale = Vector3.one * 1.5f;
+          break;
+        }
+        case EnemyType.Wisp: { // Ma Trơi: a floating blue-green will-o'-wisp with a pale core
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(0, 1.3f, 0), Vector3.one * 1.1f, Flash(Gfx.Hex("#3fb8a8"), Gfx.Hex("#2ad1b8")));
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(0, 1.3f, 0), Vector3.one * .55f, Gfx.Unlit(Gfx.Hex("#e8fff9")));
+          for (int i = 0; i < 3; i++) {
+            float a = i * 120f * Mathf.Deg2Rad;
+            var f = Gfx.MeshObj(Gfx.Cone, root, new Vector3(Mathf.Cos(a) * .35f, 1.85f, Mathf.Sin(a) * .35f), new Vector3(.32f, .6f, .32f), Gfx.NewLit(Gfx.Hex("#7fe0cf"), Gfx.Hex("#3fd9c2")));
+            f.transform.localRotation = Quaternion.Euler(Mathf.Sin(a) * 18, 0, -Mathf.Cos(a) * 18);
+          }
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(-.17f, 1.38f, .48f), Vector3.one * .14f, ink);
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(.17f, 1.38f, .48f), Vector3.one * .14f, ink);
+          break;
+        }
+        case EnemyType.Inkstone: { // Nghiên mực yêu: a squat inkstone with a pool of ink on top and a stick of ink for a horn
+          var stone = Flash(Gfx.Hex("#3c3f44"));
+          Gfx.Prim(PrimitiveType.Cube, root, new Vector3(0, .45f, 0), new Vector3(1.1f, .7f, .8f), stone);
+          Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(0, .81f, -.05f), new Vector3(.7f, .02f, .5f), Gfx.Unlit(Fx.Ink));
+          var stick = Gfx.Prim(PrimitiveType.Cube, root, new Vector3(.3f, 1.05f, -.15f), new Vector3(.16f, .5f, .16f), Gfx.Lit(Gfx.Hex("#1c1d20")));
+          stick.transform.localRotation = Quaternion.Euler(0, 0, -18);
+          foreach (var x in new[] { -.22f, .22f }) {
+            Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(x, .55f, .41f), Vector3.one * .2f, Gfx.Unlit(Gfx.Hex("#faf6ec")));
+            Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(x, .55f, .5f), Vector3.one * .09f, ink);
+          }
+          foreach (var x in new[] { -.4f, .4f }) Gfx.Prim(PrimitiveType.Cube, root, new Vector3(x, .06f, .2f), new Vector3(.2f, .12f, .3f), stone);
+          break;
+        }
+        case EnemyType.Shade: { // Bóng không đèn: a tall shadow with a snuffed paper lantern for a head; a faint ground mark always shows
+          var dark = Flash(Gfx.Hex("#22232a"));
+          Gfx.MeshObj(Gfx.Cone, root, new Vector3(0, .75f, 0), new Vector3(1f, 1.5f, 1f), dark);
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(0, 1.55f, 0), new Vector3(.6f, .7f, .6f), Gfx.Lit(Gfx.Hex("#8c8577")));
+          Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(0, 1.95f, 0), new Vector3(.32f, .04f, .32f), Gfx.Lit(Fx.Ink));
+          foreach (var x in new[] { -.12f, .12f }) Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(x, 1.6f, .28f), Vector3.one * .1f, Gfx.Unlit(Gfx.Hex("#d9f2ff")));
+          var mark = Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(0, .02f, 0), new Vector3(1.1f, .01f, 1.1f), Gfx.Unlit(Gfx.Hex("#5a5c66")));
+          mark.name = "Shadow";
+          break;
+        }
+        case EnemyType.Firecracker: { // Pháo yêu: a bundle of red firecrackers with a lit fuse and a grin
+          var red = Flash(Gfx.Hex("#c62f22"));
+          for (int i = 0; i < 3; i++) {
+            float a = i * 120f * Mathf.Deg2Rad;
+            Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(Mathf.Cos(a) * .22f, .6f, Mathf.Sin(a) * .22f), new Vector3(.36f, .55f, .36f), red);
+          }
+          Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(0, .62f, 0), new Vector3(.72f, .08f, .72f), Gfx.Lit(Gfx.Hex("#e0b23a")));
+          var fuse = Gfx.Prim(PrimitiveType.Cylinder, root, new Vector3(0, 1.3f, 0), new Vector3(.05f, .18f, .05f), Gfx.Lit(Gfx.Hex("#4a3a2a")));
+          fuse.transform.localRotation = Quaternion.Euler(0, 0, 20);
+          Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(-.06f, 1.5f, 0), Vector3.one * .16f, Gfx.NewLit(Gfx.Hex("#ffb347"), Gfx.Hex("#ff7a1a")));
+          foreach (var x in new[] { -.12f, .12f }) Gfx.Prim(PrimitiveType.Sphere, root, new Vector3(x, .8f, .42f), Vector3.one * .1f, ink);
+          Gfx.Prim(PrimitiveType.Cube, root, new Vector3(0, .58f, .42f), new Vector3(.26f, .05f, .04f), ink);
           break;
         }
       }

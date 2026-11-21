@@ -14,7 +14,7 @@ namespace BachYeu {
     void Awake() { I = this; _focus = new Vector3(0, 0, -5); }
 
     public static void SetTarget(Transform t) { if (I) I._target = t; }
-    public static void Shake(float amount) { if (I) I._shake = Mathf.Max(I._shake, amount); }
+    public static void Shake(float amount) { if (I && GameSettings.ScreenShake) I._shake = Mathf.Max(I._shake, amount); }
 
     void LateUpdate() {
       if (_target) _focus = Vector3.Lerp(_focus, new Vector3(_target.position.x, 0, _target.position.z), 1 - Mathf.Exp(-Follow * Time.deltaTime));
