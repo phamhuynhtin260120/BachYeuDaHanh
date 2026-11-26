@@ -66,14 +66,14 @@ namespace BachYeu {
     public static readonly string[] ActTitle = { "Hồi 1 · Giành đèn", "Hồi 2 · Yêu quái tràn", "Hồi 3 · Tranh boss" };
     public static readonly string[] ActSub = {
       "Đứng trong vòng đèn để đổi màu đèn sang đội mình",
-      "Hạ tinh anh bờ mình để gửi Yêu to khỏe sang đội kia",
+      "Hạ tinh anh bờ mình để gửi Gấu tinh sang đội kia",
       "Hồng Đăng Quỷ Vương thức giấc. Đội đánh nhiều hơn và đội kết liễu đều được thưởng",
     };
     // ---- Hazards that make life hard for both teams ----
     /// <summary>Mưa mực: ink circles rain onto lanterns people are standing on.</summary>
     public const float InkRainFirst = 20f, InkRainEvery = 25f, InkRainRadius = 1.9f, InkRainWarn = 1.4f;
     public const int InkRainDamage = 14;
-    /// <summary>Ma Trơi: from 2:00, one at a time, a wisp steals the most valuable lantern; last hit is worth points.</summary>
+    /// <summary>Mắt Trơi: from 2:00, one at a time, a wisp steals the most valuable lantern; last hit is worth points.</summary>
     public const float WispFirst = 120f, WispEvery = 60f, WispStealSeconds = 2.5f;
     public const int WispPoints = 15;
     public static readonly Vector3 WispSpawn = new(0, 0, 11);
@@ -81,7 +81,7 @@ namespace BachYeu {
     /// <summary>Lời nguyền Hồng Đăng: the team ahead by this much is hunted harder by yokai and the boss.</summary>
     public const int CurseOn = 30, CurseOff = 15;
     public const float CurseTargetWeight = .55f; // distances to cursed players count this much
-    /// <summary>Lantern owner color: 0 Đội Lam, 1 Đội Chu, 2 Ma Trơi.</summary>
+    /// <summary>Lantern owner color: 0 Đội Lam, 1 Đội Chu, 2 Mắt Trơi.</summary>
     public static Color OwnerColor(int owner) => owner == 2 ? WispColor : TeamColor[Mathf.Clamp(owner, 0, 1)];
 
     public static Vector3 SpawnPoint(int team, int slot) => Base[Mathf.Clamp(team, 0, 1)] + new Vector3(0, 0, (slot % 2) * 1.4f - .7f);
@@ -108,14 +108,14 @@ namespace BachYeu {
     };
     public static bool IsBoss(EnemyType t) => t == EnemyType.Cat || t == EnemyType.King;
     public static string Name(EnemyType t) => t switch {
-      EnemyType.Cat => "Miêu yêu song vĩ", EnemyType.King => "Hồng Đăng Quỷ Vương", EnemyType.Wisp => "Ma Trơi", _ => "",
+      EnemyType.Cat => "Hỏa Khuyển", EnemyType.King => "Hồng Đăng Quỷ Vương", EnemyType.Wisp => "Mắt Trơi", _ => "",
     };
   }
 
   public static class Phases {
     public static readonly string[] Title = { "Giờ Tuất · Phố chợ", "Giờ Hợi · Bến sông", "Giờ Tý · Sân đền", "Giờ Sửu · Cổng Hồng Đăng" };
     public static readonly string[] Short = { "Giờ Tuất", "Giờ Hợi", "Giờ Tý", "Giờ Sửu" };
-    public static readonly string[] Sub = { "Thắp 3 lồng đèn để mở đường", "Yêu quái kéo đến từ mặt nước", "Miêu yêu song vĩ chặn đường", "Hồng Đăng Quỷ Vương thức giấc" };
+    public static readonly string[] Sub = { "Thắp 3 lồng đèn để mở đường", "Yêu quái kéo đến từ mặt nước", "Hỏa Khuyển chặn đường", "Hồng Đăng Quỷ Vương thức giấc" };
     public static readonly Vector3[] Lanterns = { new(-7, 0, 3), new(7, 0, 4), new(0, 0, 10) };
     public const int Phase2Kills = 16;
   }

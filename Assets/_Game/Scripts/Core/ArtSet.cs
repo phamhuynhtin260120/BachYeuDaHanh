@@ -38,6 +38,10 @@ namespace BachYeu {
     public GameObject Elite;
     public GameObject Cat;
     public GameObject King;
+    [Tooltip("Empty = the built-in will-o'-wisp")] public GameObject Wisp;
+    [Tooltip("Empty = built-in model")] public GameObject Inkstone;
+    [Tooltip("Empty = built-in model. A child named \"Shadow\" stays visible while it is hidden.")] public GameObject Shade;
+    [Tooltip("Empty = built-in model")] public GameObject Firecracker;
 
     [Header("Player VFX (one row per effect; effects with no row keep the built-in look)")]
     public List<PlayerFxSlot> PlayerFx = new();
@@ -186,6 +190,10 @@ namespace BachYeu {
 
     void OnValidate() { _fxMap = null; _gameMap = null; }
 
+    [Header("Lantern post (the 3 lanterns to light, Tranh Đăng lanterns)")]
+    [Tooltip("Empty = built-in primitive post. Needs a child \"Paper\" (tinted and lit), optional \"Swing\" (swayed) and a Light \"Glow\".")]
+    public GameObject LanternPost;
+
     [Header("Arena")]
     [Tooltip("Replaces the procedural floating island, trees and gate. Keep the play area flat at y = 0 within radius 12.")]
     public GameObject Environment;
@@ -209,8 +217,10 @@ namespace BachYeu {
       EnemyType.Heavy => (Heavy, 1f),
       EnemyType.Elite => Elite ? (Elite, 1f) : (Umbrella, 1.7f),
       EnemyType.Cat => (Cat, 1f),
-      EnemyType.Wisp => (null, 1f), // always the built-in will-o'-wisp
-      EnemyType.Inkstone or EnemyType.Shade or EnemyType.Firecracker => (null, 1f), // built-in models for now
+      EnemyType.Wisp => (Wisp, 1f),
+      EnemyType.Inkstone => (Inkstone, 1f),
+      EnemyType.Shade => (Shade, 1f),
+      EnemyType.Firecracker => (Firecracker, 1f),
       _ => (King, 1f),
     };
   }

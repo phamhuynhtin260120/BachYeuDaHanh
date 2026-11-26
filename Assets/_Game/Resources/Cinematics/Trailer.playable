@@ -504,12 +504,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 771b6e7cdafb84de4a2e0f13bee248a9, type: 3}
   m_Name: CineShotClip
   m_EditorClassIdentifier: Assembly-CSharp::BachYeu.CineShotClip
-  FromPos: {x: 0, y: 3.2, z: -1.5}
+  FromPos: {x: 0, y: 3.4, z: -0.8}
   FromLook: {x: 0, y: 1, z: 7}
-  ToPos: {x: 0, y: 2.2, z: 2.8}
+  ToPos: {x: 0, y: 2.6, z: 1.8}
   ToLook: {x: 0, y: 1.2, z: 8}
-  FromFov: 44
-  ToFov: 44
+  FromFov: 58
+  ToFov: 58
   Smooth: 1
   Shake: 0
 --- !u!114 &-7539194555531122487
@@ -649,7 +649,7 @@ MonoBehaviour:
   m_Name: CineCaptionClip
   m_EditorClassIdentifier: Assembly-CSharp::BachYeu.CineCaptionClip
   Title: "Tr\u0103m y\xEAu qu\xE1i k\xE9o v\u1EC1 ph\u1ED1"
-  Sub: "L\u1ED3ng \u0111\xE8n ma, \xF4 gi\u1EA5y m\u1ED9t m\u1EAFt, y\xEAu to kh\u1ECFe..."
+  Sub: "D\u01A1i \u0111\xE8n, th\u1EA1ch y\xEAu, g\u1EA5u tinh..."
   Style: 0
   Fade: 0.35
 --- !u!114 &-3830529011108010939

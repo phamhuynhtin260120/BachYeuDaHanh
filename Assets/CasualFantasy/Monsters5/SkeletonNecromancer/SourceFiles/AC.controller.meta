@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f806ac07f1c6f4245bbcb13a30a86e66
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192591
+  packageName: Full Bundle - Casual Fantasy
+  packageVersion: 1.6
+  assetPath: Assets/CasualFantasy/Monsters5/SkeletonNecromancer/SourceFiles/AC.controller
+  uploadId: 461361

@@ -20,6 +20,10 @@ namespace BachYeu {
     public static readonly Color Jade = Gfx.Hex("#6fbf7e");
 
     public Color PetalColor = Gfx.Hex("#f4a7b9");
+    /// <summary>Season petal art (Resources/FxTex) and its size, set by ArenaBuilder.ApplySeason.</summary>
+    public string PetalTex = "Petal";
+    public float PetalSize = .26f;
+    const float DotSize = .3f;
 
     abstract class Item {
       public float Life, Max;
@@ -47,10 +51,13 @@ namespace BachYeu {
     }
 
     // ---------- pooled quads ----------
-    Renderer GetQuad() {
+    /// <summary>A pooled textured card: a season petal, or a soft ink dot for dust, sparks and splashes.</summary>
+    Renderer GetQuad(bool petal = false) {
       Renderer r;
       if (_quadPool.Count > 0) { r = _quadPool.Pop(); r.gameObject.SetActive(true); }
-      else r = Gfx.MeshObj(Gfx.Quad, transform, Vector3.zero, Vector3.one, Gfx.Fade).GetComponent<Renderer>();
+      else r = Gfx.MeshObj(Gfx.Card, transform, Vector3.zero, Vector3.one, Gfx.Fade).GetComponent<Renderer>();
+      r.sharedMaterial = Gfx.FadeTex(petal ? PetalTex : "Dot");
+      r.transform.localScale = Vector3.one * (petal ? PetalSize : DotSize);
       return r;
     }
     void ReleaseQuad(Renderer r) { r.gameObject.SetActive(false); _quadPool.Push(r); }
@@ -71,8 +78,9 @@ namespace BachYeu {
 
     public void Burst(Vector3 pos, Color c, int n, float speed) {
       if (_items.Count > 500) return;
+      bool petal = c == PetalColor;
       for (int i = 0; i < n; i++) {
-        var r = GetQuad();
+        var r = GetQuad(petal);
         r.transform.position = pos;
         r.transform.rotation = UnityEngine.Random.rotation;
         var dir = new Vector3(UnityEngine.Random.value - .5f, UnityEngine.Random.value * .8f + .2f, UnityEngine.Random.value - .5f).normalized;
@@ -95,8 +103,8 @@ namespace BachYeu {
       public void Alpha(float a) { var c = C; c.a = a; Gfx.SetTint(R, c); }
     }
 
-    MeshFx AddMesh(Mesh mesh, Vector3 pos, Vector3 scale, Color c, float life, Action<MeshFx, float> tick, bool own = false) {
-      var go = Gfx.MeshObj(mesh, transform, pos, scale, Gfx.Fade);
+    MeshFx AddMesh(Mesh mesh, Vector3 pos, Vector3 scale, Color c, float life, Action<MeshFx, float> tick, bool own = false, Material mat = null) {
+      var go = Gfx.MeshObj(mesh, transform, pos, scale, mat ? mat : Gfx.Fade);
       var fx = new MeshFx { R = go.GetComponent<Renderer>(), C = c, Life = life, Max = life, OnTick = tick, OwnMesh = own };
       fx.Alpha(c.a);
       _items.Add(fx);
@@ -106,10 +114,11 @@ namespace BachYeu {
     /// <summary>Expanding ring on the ground.</summary>
     public void RingFx(Vector3 pos, Color c, float radius, float dur = .45f) {
       pos.y = .07f;
-      AddMesh(Gfx.Ring, pos, Vector3.one * .3f * radius, c, dur, (f, k) => {
-        f.R.transform.localScale = Vector3.one * radius * (.3f + .7f * k);
-        f.Alpha((1 - k) * .85f);
-      });
+      float s = radius * Gfx.RingScale("Shock");
+      AddMesh(Gfx.Ground, pos, Vector3.one * .3f * s, c, dur, (f, k) => {
+        f.R.transform.localScale = Vector3.one * s * (.3f + .7f * k);
+        f.Alpha((1 - k) * .9f);
+      }, false, Gfx.FadeTex("Shock"));
     }
 
     /// <summary>Slash arc in front of a character. yaw in degrees.</summary>
@@ -161,10 +170,13 @@ namespace BachYeu {
     /// <summary>Red ground circle that fills up, then calls onDone.</summary>
     public void TeleCircle(Vector3 pos, float radius, float dur, Action onDone) {
       pos.y = .05f;
-      var ring = AddMesh(Gfx.Ring, pos, Vector3.one * radius, new Color(Seal.r, Seal.g, Seal.b, .85f), dur, null);
-      var fill = AddMesh(Gfx.Disc, pos + Vector3.up * .01f, Vector3.one * .01f, new Color(Seal.r, Seal.g, Seal.b, .3f), dur, (f, k) => {
-        f.R.transform.localScale = Vector3.one * Mathf.Max(.01f, radius * k);
-      });
+      // Brush ring that pulses while the strike charges; a vermilion disc fills it up.
+      var ring = AddMesh(Gfx.Ground, pos, Vector3.one * radius * Gfx.RingScale("RingEdge"), new Color(Seal.r, Seal.g, Seal.b, .9f), dur,
+        (f, k) => f.Alpha(.65f + .3f * Mathf.Abs(Mathf.Sin(k * Mathf.PI * 3))), false, Gfx.FadeTex("RingEdge"));
+      float fs = radius * Gfx.RingScale("Fill");
+      var fill = AddMesh(Gfx.Ground, pos + Vector3.up * .01f, Vector3.one * .01f, new Color(Seal.r, Seal.g, Seal.b, .38f), dur, (f, k) => {
+        f.R.transform.localScale = Vector3.one * Mathf.Max(.01f, fs * k);
+      }, false, Gfx.FadeTex("Fill"));
       fill.OnTick += (f, k) => { if (k >= .999f) { } };
       _items.Add(new Callback { Life = dur, Max = dur, Done = onDone });
     }

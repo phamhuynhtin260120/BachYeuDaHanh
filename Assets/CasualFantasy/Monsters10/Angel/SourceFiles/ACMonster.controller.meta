@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3cb728d4653381e44b55583442bae451
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192591
+  packageName: Full Bundle - Casual Fantasy
+  packageVersion: 1.6
+  assetPath: Assets/CasualFantasy/Monsters10/Angel/SourceFiles/ACMonster.controller
+  uploadId: 461361

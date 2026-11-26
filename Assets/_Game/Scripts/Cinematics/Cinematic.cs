@@ -18,8 +18,19 @@ namespace BachYeu {
   public class Cinematic : MonoBehaviour {
     public const string Folder = "Cinematics/";
     static Cinematic _i;
+    /// <summary>A film (Trailer, Win, Lose) is running: it owns the screen and input.</summary>
     public static bool Playing => _i;
-    public static Camera Cam => _i ? _i._cam : null;
+    /// <summary>
+    /// A looping backdrop film (MenuStart, MenuHub): the menu's living background. No bars, captions or skip, the UI
+    /// stays on top, and it pauses while a real film plays (the film borrows its camera and gives it back).
+    /// </summary>
+    static Cinematic _bg;
+    bool _backdrop;
+    string _name;
+    /// <summary>The film the tracks are evaluating for: the real film if one runs, else the backdrop.</summary>
+    static Cinematic Ctx => _i ? _i : _bg;
+    public static bool Active => Ctx;
+    public static Camera Cam => Ctx ? Ctx._cam : null;
 
     PlayableDirector _director;
     Camera _cam, _mainCam;
@@ -54,12 +65,59 @@ namespace BachYeu {
 
     public static void Skip() { if (_i) _i.Finish(); }
 
-    public static Vector3 World(Vector3 offset) => _i ? _i._anchor + _i._yaw * offset : offset;
+    /// <summary>Loop Resources/Cinematics/<paramref name="name"/> as the backdrop (anchored at the arena centre). False if missing.</summary>
+    public static bool PlayBackdrop(string name, Vector3? anchor = null, float yaw = 0) {
+      if (_bg && _bg._name == name) { _bg._anchor = anchor ?? Vector3.zero; _bg._yaw = Quaternion.Euler(0, yaw, 0); return true; }
+      var asset = Resources.Load<TimelineAsset>(Folder + name);
+      if (!asset) return false;
+      if (!_bg) {
+        var go = new GameObject("Backdrop_" + name);
+        _bg = go.AddComponent<Cinematic>();
+        _bg._backdrop = true;
+        _bg.BeginBackdropCamera();
+      } else {
+        _bg._director.Stop();
+        foreach (Transform c in _bg.transform) if (c.name == "Prop") Destroy(c.gameObject);
+      }
+      _bg._name = name;
+      _bg._anchor = anchor ?? Vector3.zero;
+      _bg._yaw = Quaternion.Euler(0, yaw, 0);
+      _bg.gameObject.name = "Backdrop_" + name;
+      _bg.RunBackdrop(asset);
+      return true;
+    }
+
+    public static void StopBackdrop() { if (_bg) Destroy(_bg.gameObject); }
+
+    public static Vector3 World(Vector3 offset) => Ctx ? Ctx._anchor + Ctx._yaw * offset : offset;
 
     public static string Fill(string s) {
-      if (string.IsNullOrEmpty(s) || !_i) return s ?? "";
-      foreach (var kv in _i._tokens) s = s.Replace(kv.Key, kv.Value);
+      if (string.IsNullOrEmpty(s) || !Ctx) return s ?? "";
+      foreach (var kv in Ctx._tokens) s = s.Replace(kv.Key, kv.Value);
       return s;
+    }
+
+    // ---------------- backdrop ----------------
+    void BeginBackdropCamera() {
+      _mainCam = Camera.main;
+      var camGo = new GameObject("BackdropCamera");
+      camGo.transform.SetParent(transform, false);
+      _cam = camGo.AddComponent<Camera>();
+      if (_mainCam) { _cam.CopyFrom(_mainCam); _mainCam.enabled = false; }
+      _cam.cullingMask &= ~((1 << 29) | (1 << 30)); // the hub hero and bestiary preview stages
+      _cam.nearClipPlane = .1f; _cam.farClipPlane = 200f;
+      camGo.AddComponent<UniversalAdditionalCameraData>().renderPostProcessing = true;
+      camGo.tag = "MainCamera";
+      _director = gameObject.AddComponent<PlayableDirector>();
+      _director.playOnAwake = false;
+      _director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
+    }
+
+    void RunBackdrop(TimelineAsset asset) {
+      _director.playableAsset = asset;
+      _director.extrapolationMode = DirectorWrapMode.Loop;
+      _director.time = 0;
+      _director.Play();
     }
 
     // ---------------- lifecycle ----------------
@@ -107,11 +165,17 @@ namespace BachYeu {
     }
 
     void OnDestroy() {
+      if (_bg == this) { _bg = null; if (_mainCam) _mainCam.enabled = true; return; }
       if (_i == this) { _i = null; foreach (var c in _hidden) if (c) c.enabled = true; if (_mainCam) _mainCam.enabled = true; }
       if (_overlay) Destroy(_overlay);
     }
 
     void Update() {
+      if (_backdrop) { // hold still while a real film borrows the screen
+        if (_i && _director.state == PlayState.Playing) _director.Pause();
+        else if (!_i && _director.state != PlayState.Playing) _director.Resume();
+        return;
+      }
       // Cinema bars slide in.
       float k = Mathf.Clamp01((float)(_director ? _director.time : 0) / .4f);
       if (_barTop) { _barTop.sizeDelta = new Vector2(0, 74 * k); _barBottom.sizeDelta = new Vector2(0, 74 * k); }
@@ -184,14 +248,14 @@ namespace BachYeu {
     }
 
     public static void ShowCaption(CaptionStyle s, string title, string sub) {
-      if (!_i || !_i._caps.TryGetValue(s, out var c)) return;
+      if (!Ctx || Ctx._caps == null || !Ctx._caps.TryGetValue(s, out var c)) return;
       c.title.text = title; c.sub.text = sub;
     }
 
-    public static void HideCaption(CaptionStyle s) { if (_i && _i._caps.TryGetValue(s, out var c)) c.g.alpha = 0; }
+    public static void HideCaption(CaptionStyle s) { if (Ctx && Ctx._caps.TryGetValue(s, out var c)) c.g.alpha = 0; }
 
     public static void CaptionAlpha(CaptionStyle s, float a, float progress) {
-      if (!_i || !_i._caps.TryGetValue(s, out var c)) return;
+      if (!Ctx || !Ctx._caps.TryGetValue(s, out var c)) return;
       c.g.alpha = a;
       float drift = s == CaptionStyle.Lower ? 18f * progress : 0;          // lower thirds glide a little
       float scale = s == CaptionStyle.Lower ? 1f : 1f + .04f * progress;    // titles breathe
@@ -199,15 +263,16 @@ namespace BachYeu {
       if (s == CaptionStyle.Lower) c.title.rectTransform.anchoredPosition = new Vector2(drift, -20);
     }
 
-    public static void SetFade(Color c) { if (_i && _i._fade) _i._fade.color = c; }
+    public static void SetFade(Color c) { if (Ctx && Ctx._fade) Ctx._fade.color = c; }
 
     // ---------------- props ----------------
     public static Transform SpawnProp(PropKind kind, int id, Vector3 offset, float yaw, float scale) {
-      if (!_i) return null;
+      var ctx = Ctx;
+      if (!ctx) return null;
       var root = new GameObject("Prop").transform;
-      root.SetParent(_i.transform, false);
+      root.SetParent(ctx.transform, false);
       root.position = World(offset);
-      root.rotation = _i._yaw * Quaternion.Euler(0, yaw, 0);
+      root.rotation = ctx._yaw * Quaternion.Euler(0, yaw, 0);
       root.localScale = Vector3.zero;
       if (kind == PropKind.Yokai) {
         var type = (EnemyType)Mathf.Clamp(id, 0, 255);

@@ -57,6 +57,8 @@ namespace BachYeu {
       dim.gameObject.AddComponent<Image>().color = new Color(.15f, .15f, .14f, .45f);
 
       var card = UiKit.Rect(root, "Card", C, C, Vector2.zero, new Vector2(560, 650));
+
+      card.gameObject.AddComponent<GlassModal>(); // dark frosted glass, light text
       _card = card.gameObject;
       card.gameObject.AddComponent<Image>().color = UiKit.InkPaper;
       UiKit.InkImage(card, "Wash", "Wash", C, C, Vector2.zero, new Vector2(700, 790), new Color(1, 1, 1, .9f));

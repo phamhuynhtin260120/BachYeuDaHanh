@@ -18,7 +18,11 @@ namespace BachYeu {
   public class CharacterSelect : MonoBehaviour {
     public const string SceneName = "CharacterSelect";
     const int StageLayer = 30;                          // stage objects render only to the stage camera
-    static readonly Vector3 Origin = new(0, -300, 0);   // far below the arena
+    static readonly Vector3 Hidden = new(0, -300, 0);   // far below the arena (no arena loaded: standalone test)
+    static readonly Vector3 OnArena = new(0, 0, -6.5f); // on the real arena, in front of the lotus pond
+    static Vector3 Origin = Hidden;
+    /// <summary>The line-up stands in the real arena (living background) instead of on a blank stage.</summary>
+    bool _live;
 
     [Tooltip("Model shown on the stage per mask, in order Hồ Ly, Tengu, Hà Bá, Quỷ Đá. Use the pack prefab (it has appear/display clips). Empty = ArtSet player model.")]
     public GameObject[] Showcase = new GameObject[4];
@@ -71,6 +75,9 @@ namespace BachYeu {
     readonly List<(Image card, Image stamp, Text stampText)> _tabs = new();
 
     void Start() {
+      foreach (var r in gameObject.scene.GetRootGameObjects()) UiKit.Reskin(r.transform);
+      _live = ArenaBuilder.I;
+      Origin = _live ? new Vector3(OnArena.x, GroundMover.GroundY(OnArena), OnArena.z) : Hidden;
       HideGame();
       BuildStage();
       BuildUi();
@@ -88,7 +95,7 @@ namespace BachYeu {
       foreach (var c in FindObjectsByType<Canvas>())
         if (c.isRootCanvas && c.enabled && c.gameObject.scene != gameObject.scene) { c.enabled = false; _hiddenCanvases.Add(c); }
       _fogWas = RenderSettings.fog;
-      RenderSettings.fog = false;
+      if (!_live) RenderSettings.fog = false; // the arena keeps its mist: far scenery fades, the line-up stays clear
       if (!EventSystem.current) {
         var es = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         SceneManager.MoveGameObjectToScene(es, gameObject.scene);
@@ -106,9 +113,10 @@ namespace BachYeu {
       var camGo = new GameObject("StageCamera");
       SceneManager.MoveGameObjectToScene(camGo, gameObject.scene);
       _cam = camGo.AddComponent<Camera>();
+      if (_live && _hiddenCam) _cam.CopyFrom(_hiddenCam); // same sky, fog colour and post as the arena camera
       _cam.clearFlags = CameraClearFlags.SolidColor;
-      _cam.backgroundColor = UiKit.InkPaper;
-      _cam.cullingMask = 1 << StageLayer;
+      _cam.backgroundColor = _live && _hiddenCam ? _hiddenCam.backgroundColor : UiKit.InkPaper;
+      _cam.cullingMask = _live ? ~(1 << 29) : 1 << StageLayer; // live: the whole arena (not the hub hero's private stage)
       _cam.fieldOfView = 34;
       _cam.nearClipPlane = .1f; _cam.farClipPlane = 80;
       _cam.depth = 50;
@@ -121,22 +129,25 @@ namespace BachYeu {
       SceneManager.MoveGameObjectToScene(lightGo, gameObject.scene);
       var light = lightGo.AddComponent<Light>();
       light.type = LightType.Directional;
-      light.intensity = 1.1f;
+      light.intensity = _live ? .45f : 1.1f; // live: a soft key light on top of the arena's sun
       light.color = Gfx.Hex("#fff3dd");
       light.cullingMask = 1 << StageLayer;
       light.shadows = LightShadows.Soft;
       lightGo.transform.rotation = Quaternion.Euler(38, -28, 0);
 
-      // Ink-wash stage: a dark stone disc with a pale rim, and a large ink circle behind.
-      var stage = Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, -.15f, .6f), new Vector3(13.5f, .15f, 6.5f), Gfx.Lit(Gfx.Hex("#4a423b")));
-      var rim = Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, -.17f, .6f), new Vector3(14.1f, .14f, 7.0f), Gfx.Lit(Gfx.Hex("#d9ceb6")));
-      var moon = Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, 3.4f, 9f), new Vector3(9f, .05f, 9f), Gfx.Unlit(Gfx.Hex("#e6dcc6")));
-      moon.transform.rotation = Quaternion.Euler(90, 0, 0);
+      // Blank stage only (no arena): a dark stone disc with a pale rim, and a large ink circle behind.
+      if (!_live) {
+        Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, -.15f, .6f), new Vector3(13.5f, .15f, 6.5f), Gfx.Lit(Gfx.Hex("#4a423b")));
+        Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, -.17f, .6f), new Vector3(14.1f, .14f, 7.0f), Gfx.Lit(Gfx.Hex("#d9ceb6")));
+        var moon = Gfx.Prim(PrimitiveType.Cylinder, transform, Origin + new Vector3(0, 3.4f, 9f), new Vector3(9f, .05f, 9f), Gfx.Unlit(Gfx.Hex("#e6dcc6")));
+        moon.transform.rotation = Quaternion.Euler(90, 0, 0);
+      }
 
       for (int i = 0; i < Masks.All.Length; i++) {
         var s = new Slot { Mask = i };
         float x = (i - (Masks.All.Length - 1) / 2f) * Spacing;
         s.Home = Origin + new Vector3(x, 0, Mathf.Abs(x) * .18f);
+        if (_live) s.Home.y = GroundMover.GroundY(s.Home); // stand on the arena floor
         s.Root = new GameObject("Char_" + Masks.All[i].Name).transform;
         s.Root.SetParent(transform, false);
         s.Root.position = s.Home;
@@ -216,9 +227,10 @@ namespace BachYeu {
       var TC = new Vector2(.5f, 1); var BC = new Vector2(.5f, 0); var R = new Vector2(1, .5f); var BL = new Vector2(0, 0); var BR = new Vector2(1, 0);
       var ink = UiKit.InkBlack; var grey = UiKit.InkGrey;
 
-      UiKit.LabelAt(root, "Chọn nhân vật", 46, ink, TC, TC, new Vector2(0, -22), new Vector2(900, 56), TextAnchor.MiddleCenter, FontStyle.Bold);
-      UiKit.LabelAt(root, "Mỗi nhân vật là một mặt nạ. Mang theo 2: nhân vật chọn trước ra trận trước, bấm Đổi để chuyển sang người còn lại.",
+      var title = UiKit.LabelAt(root, "Chọn nhân vật", 46, ink, TC, TC, new Vector2(0, -22), new Vector2(900, 56), TextAnchor.MiddleCenter, FontStyle.Bold);
+      var hint = UiKit.LabelAt(root, "Mỗi nhân vật là một mặt nạ. Mang theo 2: nhân vật chọn trước ra trận trước, bấm Đổi để chuyển sang người còn lại.",
         19, grey, TC, TC, new Vector2(0, -76), new Vector2(1200, 28), TextAnchor.MiddleCenter);
+      if (_live) foreach (var l in new[] { title, hint }) { var o = l.gameObject.AddComponent<Outline>(); o.effectColor = new Color(.97f, .95f, .9f, .9f); o.effectDistance = new Vector2(2, -2); }
 
       // Info scroll on the right.
       var info = UiKit.InkImage(root, "Info", "Scroll", R, R, new Vector2(-18, 30), new Vector2(380, 600), Color.white);
@@ -315,6 +327,10 @@ namespace BachYeu {
         // Drift toward the character in focus, but stay to its right so it sits left of the info scroll.
         float camX = (_slots[_focus].Home.x - Origin.x) * .15f + CamShift;
         var camPos = Origin + new Vector3(camX, 2.8f, -CamDist);
+        if (_live) { // a slow breathing drift and a small swing toward the character in focus, so the arena feels alive
+          float t = Time.unscaledTime;
+          camPos += new Vector3(Mathf.Sin(t * .22f) * .5f + (_slots[_focus].Home.x - Origin.x) * .35f, Mathf.Sin(t * .31f) * .15f, 0);
+        }
         var look = Origin + new Vector3(camX, 1f, 0);
         _cam.transform.position = Vector3.Lerp(_cam.transform.position, camPos, Time.deltaTime * 4f);
         _cam.transform.rotation = Quaternion.Slerp(_cam.transform.rotation, Quaternion.LookRotation(look - camPos), Time.deltaTime * 4f);

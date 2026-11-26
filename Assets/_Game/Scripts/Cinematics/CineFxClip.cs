@@ -22,7 +22,7 @@ namespace BachYeu {
     public class Behaviour : PlayableBehaviour {
       public CineFxClip Clip;
       public override void OnBehaviourPlay(Playable playable, FrameData info) {
-        if (Clip == null || !Cinematic.Playing) return;
+        if (Clip == null || !Cinematic.Active) return;
         var pos = Cinematic.World(Clip.Offset);
         if (!ArtSet.Play(Clip.Kind, pos, 0, Clip.Scale) && Fx.I) Fx.I.Burst(pos + Vector3.up, UiKit.Seal, 18, 3f);
         if (Clip.PlaySound) Sfx.Play(Clip.Sound, pos);

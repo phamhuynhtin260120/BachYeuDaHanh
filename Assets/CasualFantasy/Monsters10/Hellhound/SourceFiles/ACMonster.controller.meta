@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cb6b7cbce7ead944697ba1138d01e2f7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192591
+  packageName: Full Bundle - Casual Fantasy
+  packageVersion: 1.6
+  assetPath: Assets/CasualFantasy/Monsters10/Hellhound/SourceFiles/ACMonster.controller
+  uploadId: 461361

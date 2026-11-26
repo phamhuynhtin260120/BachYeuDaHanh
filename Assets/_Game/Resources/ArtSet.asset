@@ -16,12 +16,16 @@ MonoBehaviour:
   PlayerTengu: {fileID: 7987977288164884396, guid: 7598d7a0d2ea74e31b0affc0ef065657, type: 3}
   PlayerHaBa: {fileID: 4699021758550808335, guid: d51d8539db6c3429491da94ff0ea0af7, type: 3}
   PlayerQuyDa: {fileID: 4197139850870719257, guid: e515b2e7a73974bb08a06df4c2b4bd17, type: 3}
-  Ghost: {fileID: 0}
-  Umbrella: {fileID: 0}
-  Heavy: {fileID: 0}
-  Elite: {fileID: 0}
-  Cat: {fileID: 0}
-  King: {fileID: 0}
+  Ghost: {fileID: 7134140664658298558, guid: 0210f507d09c54ee2a559b9a2df6000e, type: 3}
+  Umbrella: {fileID: 5379773304306879392, guid: 1060e64f8bd2e49aaa1bb90725cc24a8, type: 3}
+  Heavy: {fileID: 1271034684994649552, guid: 0ffe479453ca9489f8906bade60ecc5a, type: 3}
+  Elite: {fileID: 6006036688657502520, guid: 3aa1fc4d1f0344888937b17358d56b7b, type: 3}
+  Cat: {fileID: 4187794769545758867, guid: e39dd522b83214c0abd2208c37643f8d, type: 3}
+  King: {fileID: 6937218841245889530, guid: 3d06c503fb1654d04a58791b0c0adb20, type: 3}
+  Wisp: {fileID: 6901260705651432668, guid: 0e122da0ba3b446a5b8aeb421ed0219a, type: 3}
+  Inkstone: {fileID: 6350395242329742677, guid: 4b7761164240240529da545c00546fb3, type: 3}
+  Shade: {fileID: 7335990677347490971, guid: 3454e9a0f50544731ae679050643442b, type: 3}
+  Firecracker: {fileID: 8773830492069598648, guid: e28b0733c00a74a32abf65bc5f23d37a, type: 3}
   PlayerFx:
   - Kind: 0
     Prefab: {fileID: 1996079926692674, guid: fb101b1453aec9747a5ed7244075b1a2, type: 3}
@@ -316,4 +320,5 @@ MonoBehaviour:
     KeepBuiltIn: 1
     Offset: {x: 0, y: 0, z: 0}
     Scale: 1
+  LanternPost: {fileID: 8887979301003670663, guid: e4adbd71bf8a74e2baffa91c50c2744e, type: 3}
   Environment: {fileID: 4965686182974664388, guid: 96c922399a07c46dcba36bdc08ea8fa6, type: 3}

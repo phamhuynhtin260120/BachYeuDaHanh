@@ -46,6 +46,8 @@ namespace BachYeu {
       dim.gameObject.AddComponent<Image>().color = new Color(.15f, .15f, .14f, .45f);
 
       var card = UiKit.Rect(root, "Card", C, C, Vector2.zero, new Vector2(1240, 780));
+
+      card.gameObject.AddComponent<GlassModal>(); // dark frosted glass, light text
       card.gameObject.AddComponent<Image>().color = UiKit.InkPaper;
       UiKit.InkImage(card, "Wash", "Wash", C, C, Vector2.zero, new Vector2(1420, 920), new Color(1, 1, 1, .9f));
       UiKit.LabelAt(card, "Cách chơi", 48, UiKit.InkBlack, TL, TL, new Vector2(48, -24), new Vector2(500, 64), TextAnchor.MiddleLeft, FontStyle.Bold);
@@ -81,7 +83,7 @@ namespace BachYeu {
       _page.text = Page(i);
     }
 
-    static string H(string s) => $"<b><color=#a8321f>{s}</color></b>";
+    static string H(string s) => $"<b><color=#f0a070>{s}</color></b>"; // headings read on the dark glass
 
     static string Page(int i) {
       var b = new StringBuilder();
@@ -105,7 +107,7 @@ namespace BachYeu {
           b.AppendLine();
           b.AppendLine(H("Giờ Tuất · Phố chợ") + "  Đứng trong vòng vàng để thắp 3 lồng đèn.");
           b.AppendLine(H("Giờ Hợi · Bến sông") + $"  Hạ {Phases.Phase2Kills} yêu quái kéo đến từ mặt nước.");
-          b.AppendLine(H("Giờ Tý · Sân đền") + "  Đánh bại Miêu yêu song vĩ.");
+          b.AppendLine(H("Giờ Tý · Sân đền") + "  Đánh bại Hỏa Khuyển.");
           b.AppendLine(H("Giờ Sửu · Cổng Hồng Đăng") + "  Đánh bại Hồng Đăng Quỷ Vương.");
           b.AppendLine();
           b.AppendLine("• Sau mỗi canh giờ, chọn một phúc lành để mạnh hơn cho tới hết đêm.");
@@ -130,7 +132,7 @@ namespace BachYeu {
           b.AppendLine(H(Contest.ActTitle[2]) + "  " + Contest.ActSub[2] + ".");
           b.AppendLine();
           b.AppendLine("• Mưa mực trút xuống những lồng đèn có người đứng: nhìn vòng đen mà tránh.");
-          b.AppendLine("• Từ phút thứ hai, Ma Trơi trôi tới cướp đèn. Hạ nó để được thêm điểm.");
+          b.AppendLine("• Từ phút thứ hai, Mắt Trơi trôi tới cướp đèn. Hạ nó để được thêm điểm.");
           b.AppendLine("• Đội dẫn quá xa sẽ bị Lời nguyền Hồng Đăng: yêu quái và boss săn đội đó trước.");
           b.Append("• Giữ đủ cả 3 đèn trong 15 giây là thắng ngay.");
           break;
@@ -144,7 +146,10 @@ namespace BachYeu {
           b.AppendLine($"• Gặp một loài yêu quái mới, được ghi vào Bách yêu lục: +{Bestiary.FirstSightReward}.");
           b.AppendLine();
           b.AppendLine(H("Tiêu Hồn đăng"));
-          b.Append("• Mở Túi pháp khí ở menu để mua và nâng cấp pháp khí. Mang tối đa 3 món vào trận.");
+          b.AppendLine("• Mở Túi pháp khí ở menu để mua và nâng cấp pháp khí. Mang tối đa 3 món vào trận.");
+          b.AppendLine();
+          b.AppendLine(H("Ghi công"));
+          b.Append("<size=17>Biểu tượng: game-icons.net, tác giả Lorc và Delapouite, giấy phép CC BY 3.0. Phông chữ: Baloo 2, Ek Type, giấy phép SIL OFL 1.1.</size>");
           break;
       }
       return b.ToString();

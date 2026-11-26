@@ -6,12 +6,12 @@ namespace BachYeu {
   public class ArenaBuilder : MonoBehaviour {
     public const float PlayRadius = 12f;
 
-    public struct Season { public string Name; public Color Bg, Ground, Petal; public Color[] Leaves; }
+    public struct Season { public string Name; public Color Bg, Ground, Petal; public Color[] Leaves; public string PetalTex; public float PetalSize; }
     public static readonly Season[] Seasons = {
-      new() { Name = "Xuân", Bg = Gfx.Hex("#ece4d6"), Ground = Gfx.Hex("#a9c48a"), Petal = Gfx.Hex("#f4a7b9"), Leaves = new[] { Gfx.Hex("#f2b8c6"), Gfx.Hex("#f7d3dc"), Gfx.Hex("#e89aae") } },
-      new() { Name = "Hạ", Bg = Gfx.Hex("#e4e7d8"), Ground = Gfx.Hex("#8fbf7a"), Petal = Gfx.Hex("#e8f59a"), Leaves = new[] { Gfx.Hex("#5f9e6e"), Gfx.Hex("#7fb88a"), Gfx.Hex("#4c8a63") } },
-      new() { Name = "Thu", Bg = Gfx.Hex("#ebdfcf"), Ground = Gfx.Hex("#c9b27a"), Petal = Gfx.Hex("#e0803f"), Leaves = new[] { Gfx.Hex("#d9773f"), Gfx.Hex("#e8a050"), Gfx.Hex("#c25a32") } },
-      new() { Name = "Đông", Bg = Gfx.Hex("#e1e5ea"), Ground = Gfx.Hex("#eef2f5"), Petal = Gfx.Hex("#ffffff"), Leaves = new[] { Gfx.Hex("#f4f6f8"), Gfx.Hex("#dfe7ee"), Gfx.Hex("#c9d6e0") } },
+      new() { Name = "Xuân", Bg = Gfx.Hex("#ece4d6"), Ground = Gfx.Hex("#a9c48a"), Petal = Gfx.Hex("#f4a7b9"), PetalTex = "Petal", PetalSize = .26f, Leaves = new[] { Gfx.Hex("#f2b8c6"), Gfx.Hex("#f7d3dc"), Gfx.Hex("#e89aae") } },
+      new() { Name = "Hạ", Bg = Gfx.Hex("#e4e7d8"), Ground = Gfx.Hex("#8fbf7a"), Petal = Gfx.Hex("#b5d36a"), PetalTex = "Leaf", PetalSize = .28f, Leaves = new[] { Gfx.Hex("#5f9e6e"), Gfx.Hex("#7fb88a"), Gfx.Hex("#4c8a63") } },
+      new() { Name = "Thu", Bg = Gfx.Hex("#ebdfcf"), Ground = Gfx.Hex("#c9b27a"), Petal = Gfx.Hex("#e0803f"), PetalTex = "Leaf", PetalSize = .32f, Leaves = new[] { Gfx.Hex("#d9773f"), Gfx.Hex("#e8a050"), Gfx.Hex("#c25a32") } },
+      new() { Name = "Đông", Bg = Gfx.Hex("#e1e5ea"), Ground = Gfx.Hex("#eef2f5"), Petal = Gfx.Hex("#ffffff"), PetalTex = "Snow", PetalSize = .22f, Leaves = new[] { Gfx.Hex("#f4f6f8"), Gfx.Hex("#dfe7ee"), Gfx.Hex("#c9d6e0") } },
     };
 
     [Range(0, 3)] public int SeasonIndex;
@@ -101,7 +101,7 @@ namespace BachYeu {
       var petalRoot = new GameObject("Petals").transform;
       petalRoot.SetParent(root, false);
       for (int i = 0; i < 160; i++) {
-        var q = Gfx.MeshObj(Gfx.Quad, petalRoot, new Vector3(Random.Range(-17f, 17f), Random.Range(0f, 14f), Random.Range(-17f, 17f)), Vector3.one * 1.2f, Gfx.Fade);
+        var q = Gfx.MeshObj(Gfx.Card, petalRoot, new Vector3(Random.Range(-17f, 17f), Random.Range(0f, 14f), Random.Range(-17f, 17f)), Vector3.one * .26f, Gfx.FadeTex("Petal"));
         q.transform.rotation = Random.rotation;
         _petals.Add(q.transform);
       }
@@ -134,7 +134,7 @@ namespace BachYeu {
       for (int team = 0; team < 2; team++) {
         var b = Contest.Base[team];
         var col = Contest.TeamColor[team];
-        var disc = Gfx.MeshObj(Gfx.Disc, t, b + new Vector3(0, .04f, 0), Vector3.one * 2.8f, Gfx.Fade);
+        var disc = Gfx.GroundDecal("Fill", t, b + new Vector3(0, .04f, 0), 2.8f);
         disc.name = "Bank_" + team;
         Gfx.SetTint(disc.GetComponent<Renderer>(), new Color(col.r, col.g, col.b, .28f));
         foreach (var dz in new[] { -2.2f, 2.2f }) {
@@ -149,8 +149,15 @@ namespace BachYeu {
       var s = Seasons[Mathf.Clamp(i, 0, 3)];
       if (_ground) _ground.sharedMaterial.SetColor("_BaseColor", s.Ground);
       for (int k = 0; k < _leaves.Count; k++) _leaves[k].sharedMaterial.SetColor("_BaseColor", s.Leaves[k % 3]);
-      foreach (var p in _petals) Gfx.SetTint(p.GetComponent<Renderer>(), new Color(s.Petal.r, s.Petal.g, s.Petal.b, .85f));
-      if (Fx.I) Fx.I.PetalColor = s.Petal;
+      // Season art from Resources/FxTex: cherry petals, summer and autumn leaves, snowflakes. Slight size variety.
+      var petalMat = Gfx.FadeTex(s.PetalTex);
+      for (int k = 0; k < _petals.Count; k++) {
+        var r = _petals[k].GetComponent<Renderer>();
+        r.sharedMaterial = petalMat;
+        _petals[k].localScale = Vector3.one * s.PetalSize * (.8f + (k * 37 % 10) * .05f);
+        Gfx.SetTint(r, new Color(s.Petal.r, s.Petal.g, s.Petal.b, .9f));
+      }
+      if (Fx.I) { Fx.I.PetalColor = s.Petal; Fx.I.PetalTex = s.PetalTex; Fx.I.PetalSize = s.PetalSize; }
 
       RenderSettings.fog = true;
       RenderSettings.fogMode = FogMode.Linear;

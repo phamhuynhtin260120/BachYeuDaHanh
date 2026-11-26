@@ -82,6 +82,8 @@ namespace BachYeu {
       dim.gameObject.AddComponent<Image>().color = new Color(.15f, .15f, .14f, .45f);
 
       var card = UiKit.Rect(root, "Card", C, C, Vector2.zero, new Vector2(1240, 780));
+
+      card.gameObject.AddComponent<GlassModal>(); // dark frosted glass, light text
       card.gameObject.AddComponent<Image>().color = UiKit.InkPaper;
       UiKit.InkImage(card, "Wash", "Wash", C, C, Vector2.zero, new Vector2(1420, 920), new Color(1, 1, 1, .9f));
 
@@ -185,7 +187,7 @@ namespace BachYeu {
       camGo.transform.SetParent(_stage, false);
       _cam = camGo.AddComponent<Camera>();
       _cam.clearFlags = CameraClearFlags.SolidColor;
-      _cam.backgroundColor = Gfx.Hex("#e9e4d8");
+      _cam.backgroundColor = Gfx.Hex("#1d2626"); // dark, to sit inside the glass panel
       _cam.cullingMask = 1 << StageLayer;
       _cam.fieldOfView = 30;
       _cam.nearClipPlane = .1f; _cam.farClipPlane = 40;

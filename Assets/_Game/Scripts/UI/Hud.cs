@@ -137,7 +137,7 @@ namespace BachYeu {
       return hud;
     }
 
-    void Awake() { I = this; }
+    void Awake() { I = this; UiKit.Reskin(transform); }
     void OnDestroy() { if (I == this) I = null; }
 
     Action _onLeave;
@@ -311,7 +311,7 @@ namespace BachYeu {
         _ => dir.Phase switch {
           0 => $"Thắp lồng đèn {dir.LitCount}/3 · đứng cạnh đèn để thắp",
           1 => $"Đánh tan yêu quái {Mathf.Min(dir.PhaseKills, Phases.Phase2Kills)}/{Phases.Phase2Kills}",
-          2 => "Hạ Miêu yêu song vĩ",
+          2 => "Hạ Hỏa Khuyển",
           _ => "Hạ Hồng Đăng Quỷ Vương",
         }
       });
@@ -465,7 +465,7 @@ namespace BachYeu {
       bool end = dir.State == RunState.Won || dir.State == RunState.Lost;
       if (Pad) Pad.SetActive(!end && dir.State != RunState.Blessing);
       if (!ResultPanel) return;
-      if (!end) { if (ResultPanel.activeSelf) ResultPanel.SetActive(false); _resultShown = false; return; }
+      if (!end) { if (ResultPanel.activeSelf) ResultPanel.SetActive(false); _resultShown = false; EndLiveResult(); return; }
       if (_resultShown) return;
       _resultShown = true;
       _blessPickedFor = _blessRolledFor = -1;
@@ -495,8 +495,50 @@ namespace BachYeu {
       return to.sqrMagnitude < .25f ? p.transform.eulerAngles.y + 180f : Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
     }
 
+    bool _liveResult;
+    Image _resultCard;
+    readonly List<GameObject> _hudHidden = new();
+
+    /// <summary>
+    /// Living background for the result: a looping Timeline film (ResultWin / ResultLose) keeps filming the arena around
+    /// the player, and the page becomes a paper card over it. Falls back to the painted ResultBg if the film is missing.
+    /// </summary>
+    void LiveResultBackdrop(GameDirector dir) {
+      var me = PlayerAvatar.Local;
+      bool good = dir.IsContest ? me && (dir.Winner < 0 || dir.Winner == me.Team) : dir.State == RunState.Won;
+      _liveResult = me && Cinematic.PlayBackdrop(good ? "ResultWin" : "ResultLose", me.transform.position, FilmYaw(me));
+      var picture = ResultPanel.transform.Find("Picture");
+      if (picture) picture.gameObject.SetActive(!_liveResult);
+      var blocker = ResultPanel.GetComponent<Image>();
+      if (blocker) blocker.color = _liveResult ? new Color(0, 0, 0, .12f) : UiKit.InkPaper; // still blocks clicks to the game
+      if (_liveResult) { // the match HUD no longer has a painted page in front of it: tuck it away
+        foreach (Transform sib in ResultPanel.transform.parent)
+          if (sib.gameObject != ResultPanel && sib.gameObject.activeSelf && sib.name != "Numbers") { sib.gameObject.SetActive(false); _hudHidden.Add(sib.gameObject); }
+      }
+      if (!_resultCard) {
+        var r = UiKit.Rect(ResultPanel.transform, "ResultCard", new Vector2(.5f, 0), new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+        r.anchorMin = new Vector2(.5f, 0); r.anchorMax = new Vector2(.5f, 1);
+        r.sizeDelta = new Vector2(1020, -36); // narrow: the arena stays visible on both sides
+        _resultCard = r.gameObject.AddComponent<Image>();
+        _resultCard.raycastTarget = false;
+        r.SetSiblingIndex(picture ? picture.GetSiblingIndex() + 1 : 0); // above the picture, under every label
+      }
+      _resultCard.gameObject.SetActive(_liveResult);
+      _resultCard.color = new Color(UiKit.InkPaper.r, UiKit.InkPaper.g, UiKit.InkPaper.b, .9f);
+      UiKit.SkinPanel(_resultCard, false);
+    }
+
+    void EndLiveResult() {
+      foreach (var g in _hudHidden) if (g) g.SetActive(true);
+      _hudHidden.Clear();
+      if (!_liveResult) return;
+      _liveResult = false;
+      Cinematic.StopBackdrop();
+    }
+
     void ShowResultNow(GameDirector dir) {
       ResultPanel.SetActive(true);
+      LiveResultBackdrop(dir);
       if (dir.IsContest) ShowContestResult(dir);
       else ShowNightResult(dir);
       ResultBoard.Build(ResultPanel.transform, dir, dir.IsContest ? 232 : 352);
@@ -656,7 +698,7 @@ namespace BachYeu {
       UiKit.Stretch(NumbersLayer);
       var numRt = UiKit.Rect(NumbersLayer, "NumberTemplate", C, C, Vector2.zero, new Vector2(200, 50));
       NumberTemplate = numRt.gameObject.AddComponent<Text>();
-      NumberTemplate.font = UiKit.Font; NumberTemplate.fontSize = 28; NumberTemplate.fontStyle = FontStyle.Bold;
+      NumberTemplate.fontSize = 28; NumberTemplate.fontStyle = FontStyle.Bold; UiKit.ApplyFont(NumberTemplate);
       NumberTemplate.alignment = TextAnchor.MiddleCenter; NumberTemplate.color = ink; NumberTemplate.text = "123";
       NumberTemplate.raycastTarget = false;
       NumberTemplate.gameObject.AddComponent<Outline>().effectColor = new Color(.97f, .96f, .93f, .9f);
@@ -726,7 +768,7 @@ namespace BachYeu {
       }
       var pt = UiKit.Rect(NumbersLayer, "PingTemplate", C, C, Vector2.zero, new Vector2(460, 40));
       PingTemplate = pt.gameObject.AddComponent<Text>();
-      PingTemplate.font = UiKit.Font; PingTemplate.fontSize = PingSize; PingTemplate.fontStyle = FontStyle.Bold;
+      PingTemplate.fontSize = PingSize; PingTemplate.fontStyle = FontStyle.Bold; UiKit.ApplyFont(PingTemplate);
       PingTemplate.alignment = TextAnchor.MiddleCenter; PingTemplate.color = ink; PingTemplate.text = "Lan: Lại đây!";
       PingTemplate.raycastTarget = false;
       PingTemplate.gameObject.AddComponent<Outline>().effectColor = new Color(.97f, .96f, .93f, .95f);

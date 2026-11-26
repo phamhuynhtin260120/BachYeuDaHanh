@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a60a4ea431b30f54f92e1f8e28cd9605
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 9100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 192591
+  packageName: Full Bundle - Casual Fantasy
+  packageVersion: 1.6
+  assetPath: Assets/CasualFantasy/_Demo/Anim/ACDemoHuman.controller
+  uploadId: 461361

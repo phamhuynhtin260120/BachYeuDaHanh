@@ -14,40 +14,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BachYeu.SoundSet
   Sounds:
   - Id: 0
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 8c5d423eb3604482b9323af0be1eebd7, type: 3}
+    - {fileID: 8300000, guid: e178a7f6fd0fc437a85cbb8697bb9d04, type: 3}
+    - {fileID: 8300000, guid: d8a6bf549f6f54b8cb4f8eaa3b251a5f, type: 3}
+    Volume: 0.7
     PitchJitter: 0.06
   - Id: 1
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: cdd613da0e080472f85241cdcc5e2095, type: 3}
+    - {fileID: 8300000, guid: e85e41bcb1e70416cae99540311d69b9, type: 3}
+    Volume: 0.7
     PitchJitter: 0.06
   - Id: 2
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: d13d367aa329a482abf63a9680d5d7bb, type: 3}
+    - {fileID: 8300000, guid: 76920818754944ceca636027e5647df6, type: 3}
+    Volume: 0.7
     PitchJitter: 0.06
   - Id: 3
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: e0139f3fe774145b9993b372abfd0c51, type: 3}
+    - {fileID: 8300000, guid: aab148d1a31de457bbf2538c624bb316, type: 3}
+    Volume: 0.8
     PitchJitter: 0.06
   - Id: 4
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 911dff2c77184445b9d2bd91fca8b6c8, type: 3}
+    Volume: 0.9
     PitchJitter: 0.06
   - Id: 5
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 890cf12f03c9a4982b17e0126120d231, type: 3}
+    - {fileID: 8300000, guid: 4d08fd6ed33b7483f816467d8300e5eb, type: 3}
+    - {fileID: 8300000, guid: 22711187333214e8a91f16885ff8e7df, type: 3}
+    - {fileID: 8300000, guid: 8d3b96f18dd714cb495f603c7260956b, type: 3}
+    Volume: 0.75
     PitchJitter: 0.06
   - Id: 6
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 563461aefb64044f3b65f55c98fa63d4, type: 3}
+    - {fileID: 8300000, guid: 058aa51808da740bc875db963fb849eb, type: 3}
+    - {fileID: 8300000, guid: cab4ea75be31e433f9fe6459e0948fa7, type: 3}
+    Volume: 0.9
     PitchJitter: 0.06
   - Id: 7
     Clips: []
     Volume: 1
     PitchJitter: 0.06
   - Id: 8
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 5aada96ebf13e4d7686e9ecdbb022a2c, type: 3}
+    - {fileID: 8300000, guid: 0b3d9c1a8d5dc45cc87ed19a27bd3097, type: 3}
+    - {fileID: 8300000, guid: 47ec769f22031428682e37582383d20d, type: 3}
+    Volume: 0.75
     PitchJitter: 0.06
   - Id: 9
     Clips: []
@@ -70,16 +90,24 @@ MonoBehaviour:
     Volume: 1
     PitchJitter: 0.06
   - Id: 14
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 725d1887326c84f0ea3885b77e9ad258, type: 3}
+    - {fileID: 8300000, guid: a07eb25e814384627b0a0097a4774ae0, type: 3}
+    - {fileID: 8300000, guid: ea7c17ff900f14eedb778dec9e19bd13, type: 3}
+    - {fileID: 8300000, guid: 489230e516ef848d69b59572a71b65f4, type: 3}
+    Volume: 0.9
     PitchJitter: 0.06
   - Id: 15
     Clips: []
     Volume: 1
     PitchJitter: 0.06
   - Id: 16
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 796dbd35d54fc411cba2f1adcf422e68, type: 3}
+    - {fileID: 8300000, guid: 72ddd3218caaa46858b0eb2d55cf6a53, type: 3}
+    - {fileID: 8300000, guid: 2dc59467cb8f142eeafe7bce2bd22119, type: 3}
+    - {fileID: 8300000, guid: 5d6447d8bb01f411f8b46a73ab088113, type: 3}
+    Volume: 0.8
     PitchJitter: 0.06
   - Id: 17
     Clips: []
@@ -98,12 +126,17 @@ MonoBehaviour:
     Volume: 1
     PitchJitter: 0.06
   - Id: 21
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 4e3682bc7a0664148bd4f509ec08f8d5, type: 3}
+    - {fileID: 8300000, guid: cdd7ee60e3bda4060a685f8a63f9c43f, type: 3}
+    Volume: 0.9
     PitchJitter: 0.06
   - Id: 22
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: d7d6b511c7c1d4daca88030670f5eed8, type: 3}
+    - {fileID: 8300000, guid: b3f5726771e9a4b1dac0e00abeb0a714, type: 3}
+    - {fileID: 8300000, guid: 0449ea6130c1f42cab57fcea963f5af2, type: 3}
+    Volume: 0.8
     PitchJitter: 0.06
   - Id: 23
     Clips: []
@@ -130,8 +163,10 @@ MonoBehaviour:
     Volume: 1
     PitchJitter: 0.06
   - Id: 29
-    Clips: []
-    Volume: 1
+    Clips:
+    - {fileID: 8300000, guid: 806092aa8fbe949ee9aaff45b3223a1e, type: 3}
+    - {fileID: 8300000, guid: 53381715861474c8c94a5c2b55dec04d, type: 3}
+    Volume: 0.7
     PitchJitter: 0.06
   - Id: 30
     Clips: []

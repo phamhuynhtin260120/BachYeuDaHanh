@@ -307,7 +307,7 @@ namespace BachYeu {
         foreach (var e in Enemy.All) if (e.Type == EnemyType.Wisp && e.Hp > 0) alive = true;
         if (!alive) {
           SpawnEnemy(EnemyType.Wisp, Contest.WispSpawn);
-          RPC_Banner("", "Ma Trơi xuất hiện", $"Nó đi trộm lồng đèn. Ra đòn cuối được +{Contest.WispPoints} điểm");
+          RPC_Banner("", "Mắt Trơi xuất hiện", $"Nó đi trộm lồng đèn. Ra đòn cuối được +{Contest.WispPoints} điểm");
         }
         _nextWisp = t + Contest.WispEvery;
       }
@@ -359,7 +359,7 @@ namespace BachYeu {
       }
       if (e.Type == EnemyType.Wisp) {
         AddPoints(team, 1, Contest.WispPoints);
-        RPC_Toast(team >= 0 ? $"{Contest.TeamName[team]} hạ Ma Trơi · +{Contest.WispPoints}" : "Ma Trơi tan biến", team >= 0 ? Contest.TeamColor[team] : Fx.Ink);
+        RPC_Toast(team >= 0 ? $"{Contest.TeamName[team]} hạ Mắt Trơi · +{Contest.WispPoints}" : "Mắt Trơi tan biến", team >= 0 ? Contest.TeamColor[team] : Fx.Ink);
         return;
       }
       if (e.Type == EnemyType.Elite) {
@@ -367,7 +367,7 @@ namespace BachYeu {
         if (team >= 0) {
           int rival = 1 - team;
           SpawnEnemy(EnemyType.Heavy, Contest.Base[rival] + new Vector3(rival == 0 ? 2f : -2f, 0, 2f));
-          RPC_Banner("!", Contest.TeamName[team] + " gửi Yêu to khỏe", "sang bờ " + Contest.TeamName[rival]);
+          RPC_Banner("!", Contest.TeamName[team] + " gửi Gấu tinh", "sang bờ " + Contest.TeamName[rival]);
         }
         return;
       }
@@ -506,7 +506,7 @@ namespace BachYeu {
         if (PhaseKills >= 8 && !EliteSpawned) {
           EliteSpawned = true;
           SpawnEnemy(EnemyType.Elite, EdgePosition());
-          RPC_Banner("", "Ô yêu đầu đàn xuất hiện", "");
+          RPC_Banner("", "Rương tham xuất hiện", "");
         }
         if (PhaseKills >= Phases.Phase2Kills) ClearPhase();
       }
@@ -623,7 +623,7 @@ namespace BachYeu {
       if (!ArtSet.Play(lfx, Contest.Lanterns[i]) && Fx.I) Fx.I.Burst(Contest.Lanterns[i] + Vector3.up * 2, col, 30, 4);
       var me = PlayerAvatar.Local;
       if (team < 2 && me && me.Team == team && Fx.Flat(me.transform.position, Contest.Lanterns[i]) < Contest.LanternRadius + 1) me.AddUlt(10);
-      if (Hud.I) Hud.I.Toast(team < 2 ? $"{Contest.TeamName[team]} giữ {Contest.LanternName[i]}" : $"Ma Trơi trộm mất {Contest.LanternName[i]}!", col);
+      if (Hud.I) Hud.I.Toast(team < 2 ? $"{Contest.TeamName[team]} giữ {Contest.LanternName[i]}" : $"Mắt Trơi trộm mất {Contest.LanternName[i]}!", col);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -645,7 +645,7 @@ namespace BachYeu {
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_HitFx(NetworkId enemy, Vector3 pos, int dmg, NetworkBool big, PlayerRef from, NetworkBool killed, NetworkBool drop) {
       bool boss = false;
-      if (Runner.TryFindObject(enemy, out var o) && o.TryGetComponent<Enemy>(out var e)) { e.PlayHitFlash(); boss = e.IsBoss; }
+      if (Runner.TryFindObject(enemy, out var o) && o.TryGetComponent<Enemy>(out var e)) { e.PlayHitFlash(); boss = e.IsBoss; if (killed) e.MarkSlain(); }
       ArtSet.Play(big ? GameFx.EnemyHitBig : GameFx.EnemyHit, pos + Vector3.up * (boss ? 2f : 1f), Random.Range(0f, 360f));
       if (Hud.I) Hud.I.DamageNumber(pos + Vector3.up * (boss ? 4.2f : 2.3f), dmg, big, from == Runner.LocalPlayer);
       if (drop && Fx.I) Fx.I.HealOrb(pos);
@@ -665,6 +665,9 @@ namespace BachYeu {
       readonly GameObject _root, _mark, _ring, _fill;
       readonly Material _body;
       readonly float _radius;
+      readonly Transform _swing;
+      readonly Light _glow;
+      readonly float _markY, _seed;
       bool _lit;
       int _owner = -2;
 
@@ -674,15 +677,34 @@ namespace BachYeu {
         _root.transform.SetParent(parent, false);
         _root.transform.position = pos;
         var t = _root.transform;
-        Gfx.Prim(PrimitiveType.Cylinder, t, new Vector3(0, .9f, 0), new Vector3(.14f, .9f, .14f), Gfx.Lit(Gfx.Hex("#4a3426")));
-        _body = Gfx.NewLit(Gfx.Hex("#7a5a50"));
+        _seed = pos.x * 1.7f + pos.z;
+        var post = ArtSet.Current ? ArtSet.Current.LanternPost : null;
+        Renderer paper = null;
+        if (post) {
+          // Modelled post: face the arena centre, the paper is tinted and lit, the lantern sways.
+          var v = AnimUtil.SpawnVisual(post, t);
+          var to = -pos; to.y = 0;
+          if (to.sqrMagnitude > .01f) v.transform.rotation = Quaternion.LookRotation(to);
+          v.transform.position = new Vector3(pos.x, GroundMover.GroundY(pos), pos.z);
+          var p = v.transform.Find("Swing/Paper") ?? v.transform.Find("Paper");
+          paper = p ? p.GetComponent<Renderer>() : null;
+          _swing = v.transform.Find("Swing");
+          _glow = v.GetComponentInChildren<Light>(true);
+        }
+        if (paper) {
+          _body = paper.material; // own instance
+        } else {
+          Gfx.Prim(PrimitiveType.Cylinder, t, new Vector3(0, .9f, 0), new Vector3(.14f, .9f, .14f), Gfx.Lit(Gfx.Hex("#4a3426")));
+          _body = Gfx.NewLit(Gfx.Hex("#7a5a50"));
+          Gfx.Prim(PrimitiveType.Cylinder, t, new Vector3(0, 2, 0), new Vector3(.68f, .3f, .68f), _body);
+        }
         _body.EnableKeyword("_EMISSION");
         _body.SetColor("_EmissionColor", Color.black);
-        Gfx.Prim(PrimitiveType.Cylinder, t, new Vector3(0, 2, 0), new Vector3(.68f, .3f, .68f), _body);
-        _mark = Gfx.Prim(PrimitiveType.Cube, t, new Vector3(0, 3, 0), Vector3.one * .3f, Gfx.Unlit(Gfx.Hex("#d8a83a")));
+        _markY = paper ? 3.9f : 3f;
+        _mark = Gfx.Prim(PrimitiveType.Cube, t, new Vector3(0, _markY, 0), Vector3.one * .3f, Gfx.Unlit(Gfx.Hex("#d8a83a")));
         _mark.transform.rotation = Quaternion.Euler(45, 0, 45);
-        _ring = Gfx.MeshObj(Gfx.Ring, t, new Vector3(0, .05f, 0), Vector3.one * radius, Gfx.Fade);
-        _fill = Gfx.MeshObj(Gfx.Disc, t, new Vector3(0, .04f, 0), Vector3.one * .01f, Gfx.Fade);
+        _ring = Gfx.GroundDecal("ZoneRing", t, new Vector3(0, .05f, 0), radius);
+        _fill = Gfx.GroundDecal("Fill", t, new Vector3(0, .04f, 0), .01f);
         Gfx.SetTint(_fill.GetComponent<Renderer>(), new Color(.85f, .66f, .23f, .35f));
       }
 
@@ -693,17 +715,29 @@ namespace BachYeu {
         if (lit != _lit) {
           _lit = lit;
           _body.SetColor("_BaseColor", lit ? Gfx.Hex("#e0503a") : Gfx.Hex("#7a5a50"));
-          _body.SetColor("_EmissionColor", lit ? Gfx.Hex("#ff9a3d") * .9f : Color.black);
+          _body.SetColor("_EmissionColor", lit ? Gfx.Hex("#ff7a33") * (_glow ? .55f : .9f) : Color.black); // a modelled lantern also has its light: keep the paper red, not blown white
         }
+        Animate(lit ? Gfx.Hex("#ffa24a") : (Color?)null);
         _mark.SetActive(!lit);
         _ring.SetActive(!lit);
         _fill.SetActive(!lit);
         if (lit) return;
         float t = Time.time;
-        _mark.transform.localPosition = new Vector3(0, 3 + Mathf.Sin(t * 3) * .15f, 0);
+        _mark.transform.localPosition = new Vector3(0, _markY + Mathf.Sin(t * 3) * .15f, 0);
         _mark.transform.Rotate(0, 120 * Time.deltaTime, 0, Space.World);
         Gfx.SetTint(_ring.GetComponent<Renderer>(), new Color(.85f, .66f, .23f, .45f + Mathf.Sin(t * 4) * .2f));
-        _fill.transform.localScale = Vector3.one * Mathf.Max(.01f, progress * _radius);
+        _fill.transform.localScale = Vector3.one * Mathf.Max(.01f, progress * _radius * Gfx.RingScale("Fill"));
+      }
+
+      /// <summary>Gentle sway, and a flickering glow in <paramref name="light"/> (null = dark).</summary>
+      void Animate(Color? light) {
+        float t = Time.time + _seed;
+        if (_swing) _swing.localRotation = Quaternion.Euler(Mathf.Sin(t * 1.3f) * 3f, 0, Mathf.Sin(t * .9f) * 4f);
+        if (!_glow) return;
+        _glow.enabled = light.HasValue;
+        if (!light.HasValue) return;
+        _glow.color = light.Value;
+        _glow.intensity = 1.8f + Mathf.PerlinNoise(t * 3f, _seed) * .7f;
       }
 
       /// <summary>Tranh Đăng: capture in -1 (Lam) .. +1 (Chu); owner -1 none, 0 Lam, 1 Chu.</summary>
@@ -714,12 +748,13 @@ namespace BachYeu {
           _owner = owner;
           var c = owner >= 0 ? Contest.OwnerColor(owner) : Gfx.Hex("#7a5a50");
           _body.SetColor("_BaseColor", c);
-          _body.SetColor("_EmissionColor", owner >= 0 ? c * .9f : Color.black);
+          _body.SetColor("_EmissionColor", owner >= 0 ? c * (_glow ? .55f : .9f) : Color.black);
         }
         float t = Time.time;
+        Animate(owner >= 0 ? Contest.OwnerColor(owner) : (Color?)null);
         _mark.SetActive(owner < 0);
         if (owner < 0) {
-          _mark.transform.localPosition = new Vector3(0, 3 + Mathf.Sin(t * 3) * .15f, 0);
+          _mark.transform.localPosition = new Vector3(0, _markY + Mathf.Sin(t * 3) * .15f, 0);
           _mark.transform.Rotate(0, 120 * Time.deltaTime, 0, Space.World);
         }
         _ring.SetActive(true);
@@ -728,7 +763,7 @@ namespace BachYeu {
         var ringCol = owner >= 0 ? Contest.OwnerColor(owner) : new Color(.85f, .66f, .23f);
         Gfx.SetTint(_ring.GetComponent<Renderer>(), new Color(ringCol.r, ringCol.g, ringCol.b, .5f + Mathf.Sin(t * 4) * .15f));
         Gfx.SetTint(_fill.GetComponent<Renderer>(), new Color(side.r, side.g, side.b, .35f));
-        _fill.transform.localScale = Vector3.one * Mathf.Max(.01f, Mathf.Abs(capture) * _radius);
+        _fill.transform.localScale = Vector3.one * Mathf.Max(.01f, Mathf.Abs(capture) * _radius * Gfx.RingScale("Fill"));
       }
     }
   }

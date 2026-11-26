@@ -16,7 +16,7 @@ namespace BachYeu {
       "Thắp lồng đèn nhanh hơn khi cả đội cùng đứng trong vòng vàng.",
       "Ở Tranh Đăng, Đèn Cầu giữa sân được gấp đôi điểm.",
       "Hà Bá hồi máu và tạo khiên cho cả đội. Đi cùng Quỷ Đá để giữ trận.",
-      "Ma Trơi không đánh ai, nhưng nó cướp đèn. Hạ nó trước.",
+      "Mắt Trơi không đánh ai, nhưng nó cướp đèn. Hạ nó trước.",
       "Gặp loài yêu quái mới, Bách yêu lục thưởng thêm Hồn đăng.",
       "Pháp khí mang vào trận mạnh hơn khi nâng cấp ở Túi pháp khí.",
       "Nhiệm vụ hằng ngày đổi lúc nửa đêm. Nhớ nhận thưởng trước khi đi ngủ.",

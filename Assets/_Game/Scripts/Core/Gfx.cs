@@ -31,7 +31,8 @@ namespace BachYeu {
       _litCache.Clear();
       _unlitCache.Clear();
       _fadeShared = null;
-      _cone = _disc = _ring = _quad = null;
+      _cone = _disc = _ring = _quad = _card = _ground = null;
+      _texFade.Clear();
       _mpb = null;
       _templatesLoaded = false;
       _tLit = _tLitEmissive = _tUnlit = _tFade = null;
@@ -100,6 +101,29 @@ namespace BachYeu {
       }
     }
 
+    // ---------- textured fade materials (Resources/FxTex, baked from the Hovl Studio VFX textures) ----------
+    public const string FxTexDir = "FxTex/";
+    static readonly Dictionary<string, Material> _texFade = new();
+
+    /// <summary>Fade material that draws a Resources/FxTex texture (white art with alpha: tint with SetTint).
+    /// Falls back to the plain Fade material when the texture is missing.</summary>
+    public static Material FadeTex(string name) {
+      if (_texFade.TryGetValue(name, out var m) && m) return m;
+      var tex = Resources.Load<Texture2D>(FxTexDir + name);
+      if (!tex) { Debug.LogWarning($"[Gfx] Thiếu texture Resources/{FxTexDir}{name}.png"); return Fade; }
+      m = new Material(Fade) { name = "Fade_" + name };
+      m.SetTexture("_BaseMap", tex);
+      m.mainTexture = tex;
+      _texFade[name] = m;
+      return m;
+    }
+
+    /// <summary>Texture radius (in units of the Ground mesh) where each ring texture draws its line,
+    /// so callers can keep passing the radius they mean.</summary>
+    public static float RingScale(string tex) => tex switch {
+      "RingEdge" => 1.07f, "Fill" => 1.04f, "Shock" => 1.76f, "ZoneRing" => 1.12f, _ => 1f,
+    };
+
     static MaterialPropertyBlock _mpb;
     public static void SetTint(Renderer r, Color c) {
       _mpb ??= new MaterialPropertyBlock();
@@ -128,7 +152,37 @@ namespace BachYeu {
     }
 
     // ---------- meshes ----------
-    static Mesh _cone, _disc, _ring, _quad;
+    static Mesh _cone, _disc, _ring, _quad, _card, _ground;
+
+    /// <summary>Unit quad (1 x 1) on the XY plane with UVs, for textured petals and particles.</summary>
+    public static Mesh Card {
+      get {
+        if (_card) return _card;
+        _card = new Mesh { name = "Card" };
+        _card.SetVertices(new List<Vector3> { new(-.5f, -.5f, 0), new(.5f, -.5f, 0), new(.5f, .5f, 0), new(-.5f, .5f, 0) });
+        _card.SetUVs(0, new List<Vector2> { new(0, 0), new(1, 0), new(1, 1), new(0, 1) });
+        _card.SetTriangles(new[] { 0, 2, 1, 0, 3, 2 }, 0);
+        _card.RecalculateNormals();
+        return _card;
+      }
+    }
+
+    /// <summary>Quad from -1 to 1 on the XZ plane with UVs, for textured rings and discs on the ground.</summary>
+    public static Mesh Ground {
+      get {
+        if (_ground) return _ground;
+        _ground = new Mesh { name = "GroundDecal" };
+        _ground.SetVertices(new List<Vector3> { new(-1, 0, -1), new(1, 0, -1), new(1, 0, 1), new(-1, 0, 1) });
+        _ground.SetUVs(0, new List<Vector2> { new(0, 0), new(1, 0), new(1, 1), new(0, 1) });
+        _ground.SetTriangles(new[] { 0, 3, 2, 0, 2, 1 }, 0);
+        _ground.RecalculateNormals();
+        return _ground;
+      }
+    }
+
+    /// <summary>Textured ring or disc on the ground. radius = where the drawn line sits.</summary>
+    public static GameObject GroundDecal(string tex, Transform parent, Vector3 pos, float radius) =>
+      MeshObj(Ground, parent, pos, Vector3.one * radius * RingScale(tex), FadeTex(tex));
 
     /// <summary>Cone with base radius 0.5 at y=0 and apex at y=1.</summary>
     public static Mesh Cone {

@@ -48,6 +48,8 @@ namespace BachYeu {
       dim.gameObject.AddComponent<Image>().color = new Color(.15f, .15f, .14f, .45f);
 
       var card = UiKit.Rect(root, "Card", C, C, Vector2.zero, new Vector2(1240, 800));
+
+      card.gameObject.AddComponent<GlassModal>(); // dark frosted glass, light text
       card.gameObject.AddComponent<Image>().color = UiKit.InkPaper;
       UiKit.InkImage(card, "Wash", "Wash", C, C, Vector2.zero, new Vector2(1420, 940), new Color(1, 1, 1, .9f));
       UiKit.LabelAt(card, "Thành tựu", 48, UiKit.InkBlack, TL, TL, new Vector2(48, -24), new Vector2(500, 64), TextAnchor.MiddleLeft, FontStyle.Bold);

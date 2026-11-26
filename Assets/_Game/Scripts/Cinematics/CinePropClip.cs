@@ -25,7 +25,7 @@ namespace BachYeu {
       public CinePropClip Clip;
       Transform _prop;
       public override void OnBehaviourPlay(Playable playable, FrameData info) {
-        if (Clip == null || !Cinematic.Playing || _prop) return;
+        if (Clip == null || !Cinematic.Active || _prop) return;
         _prop = Cinematic.SpawnProp(Clip.Kind, Clip.Id, Clip.Offset, Clip.Yaw, Clip.Scale);
       }
       public override void ProcessFrame(Playable playable, FrameData info, object playerData) {

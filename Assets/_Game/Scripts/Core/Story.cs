@@ -30,7 +30,7 @@ namespace BachYeu {
     public static (string name, Color color) Speaker(string who) => who switch {
       Narrator => ("Lời kể", UiKit.InkGrey),
       Lantern => ("Bà Lồng", UiKit.Seal),
-      Cat => ("Miêu yêu", Gfx.Hex("#6b4f8a")),
+      Cat => ("Hỏa Khuyển", Gfx.Hex("#9e2f22")),
       King => ("Quỷ Vương", Gfx.Hex("#3a2a2a")),
       _ => (Masks.All[Mathf.Clamp(LocalProfile.MaskA, 0, Masks.All.Length - 1)].Name, Masks.All[Mathf.Clamp(LocalProfile.MaskA, 0, Masks.All.Length - 1)].Color),
     };
@@ -70,19 +70,19 @@ namespace BachYeu {
         Fragment = "Dưới gầm cầu có một chiếc mặt nạ cáo nứt đôi. Nó còn ấm, như vừa có người đeo.",
       },
       new() {
-        Title = "Lời thì thầm của Miêu yêu", Place = "Ngõ hẻm", Season = 1,
-        Teaser = "Mèo trong phố bỏ đi hết. Chỉ còn một con có hai cái đuôi, ngồi chờ bạn ở sân đền.",
+        Title = "Lời thì thầm của Hỏa Khuyển", Place = "Ngõ hẻm", Season = 1,
+        Teaser = "Chó trong phố bỏ đi hết. Chỉ còn một con chó đỏ đeo vòng gai, ngồi chờ bạn ở sân đền.",
         Intro = new[] {
-          new Line(Narrator, "Đêm thứ ba, mèo trong phố bỏ đi hết. Chỉ còn tiếng chuông gió kêu không ngớt."),
-          new Line(Cat, "Meo... Người hai mặt lại đến. Lần này ngươi định thắp đèn cho ai?"),
-          new Line(Mask, "Đừng trả lời nó. Miêu yêu chỉ nói nửa sự thật."),
+          new Line(Narrator, "Đêm thứ ba, chó trong phố bỏ đi hết, không còn một tiếng sủa. Chỉ còn tiếng chuông gió kêu không ngớt."),
+          new Line(Cat, "Gừ... Người hai mặt lại đến. Lần này ngươi định thắp đèn cho ai?"),
+          new Line(Mask, "Đừng trả lời nó. Hỏa Khuyển chỉ nói nửa sự thật."),
         },
         Outro = new[] {
           new Line(Cat, "Người giữ đèn... không muốn trời sáng đâu..."),
           new Line(Lantern, "..."),
           new Line(Lantern, "Cháu về nghỉ đi. Đừng để tâm lời yêu quái."),
         },
-        Fragment = "Miêu yêu thì thầm trước khi tan: \"Người giữ đèn không muốn trời sáng.\"",
+        Fragment = "Hỏa Khuyển thì thầm trước khi tan: \"Người giữ đèn không muốn trời sáng.\"",
       },
       new() {
         Title = "Cái tên trên chuông đền", Place = "Sân đền", Season = 2,
@@ -148,33 +148,33 @@ namespace BachYeu {
         Teaser = "Trời đổ mưa mực. Những cái tên viết trên đèn trôi dần xuống sông.",
         Intro = new[] {
           new Line(Narrator, "Đêm thứ hai, trời đổ mưa mực. Những cái tên viết trên lồng đèn chảy loang rồi trôi xuống sông."),
-          new Line(Cat, "Meo... lại là ngươi. Mưa này rơi theo người còn nhớ tên mình đấy. Né cho khéo."),
+          new Line(Cat, "Gừ... lại là ngươi. Mưa này rơi theo người còn nhớ tên mình đấy. Né cho khéo."),
           new Line(Mask, "Thấy vòng mực dưới chân thì lướt đi ngay."),
         },
         Outro = new[] {
           new Line(Cat, "Muốn biết bà già đi đâu à? Bà ấy đi trả một món nợ, ở phía sau cổng."),
           new Line(Cat, "Nợ gì thì ta không nói. Ta chỉ nói nửa sự thật, ngươi biết rồi mà."),
         },
-        Fragment = "Miêu yêu nói Bà Lồng đã đi trả một món nợ, ở phía sau cổng Hồng Đăng.",
+        Fragment = "Hỏa Khuyển nói Bà Lồng đã đi trả một món nợ, ở phía sau cổng Hồng Đăng.",
       },
       new() {
-        Title = "Đàn ô giấy", Place = "Ngõ hẻm", Season = 2, Twist = Twist.Swarm,
-        Teaser = "Hàng trăm chiếc ô giấy bị bỏ quên kéo về phố, đi tìm người chủ cũ.",
+        Title = "Đàn thạch yêu", Place = "Ngõ hẻm", Season = 2, Twist = Twist.Swarm,
+        Teaser = "Hàng trăm cục thạch yêu kéo về phố, đi tìm người đã đổ hỏng chúng.",
         Intro = new[] {
-          new Line(Narrator, "Lá thu rơi. Hàng trăm chiếc ô giấy bị bỏ quên lũ lượt kéo về phố, nhảy lò cò khắp các ngõ."),
+          new Line(Narrator, "Lá thu rơi. Hàng trăm cục thạch yêu lũ lượt kéo về phố, nhảy lò cò khắp các ngõ."),
           new Line(Mask, "Chúng đi tìm người đã bỏ chúng lại. Đông lắm, đừng để bị vây."),
         },
         Outro = new[] {
-          new Line(Narrator, "Trong đàn ô có một chiếc nhỏ vẽ hình ngọn đèn. Nó không đánh ai, chỉ lặng lẽ đi theo bạn."),
+          new Line(Narrator, "Trong đàn thạch có một cục nhỏ đội chiếc ô giấy vẽ hình ngọn đèn. Nó không đánh ai, chỉ lặng lẽ đi theo bạn."),
           new Line(Mask, "Chiếc ô ấy là của Bà Lồng. Bà để nó lại để dẫn đường cho ngươi."),
         },
-        Fragment = "Một chiếc ô giấy vẽ hình ngọn đèn lặng lẽ đi theo bạn. Đó là ô của Bà Lồng.",
+        Fragment = "Một cục thạch yêu đội chiếc ô vẽ hình ngọn đèn lặng lẽ đi theo bạn. Đó là ô của Bà Lồng.",
       },
       new() {
         Title = "Tiếng chuông không ngân", Place = "Sân đền", Season = 2, Twist = Twist.Elites,
-        Teaser = "Quả chuông khắc tên bạn im bặt. Ô yêu đầu đàn đứng canh khắp sân đền.",
+        Teaser = "Quả chuông khắc tên bạn im bặt. Bầy Rương tham đứng canh khắp sân đền.",
         Intro = new[] {
-          new Line(Narrator, "Quả chuông khắc tên bạn đã im bặt. Những Ô yêu đầu đàn đứng canh khắp sân đền."),
+          new Line(Narrator, "Quả chuông khắc tên bạn đã im bặt. Những chiếc Rương tham há miệng đứng canh khắp sân đền."),
           new Line(King, "Ngươi đến rồi. Lần này ta không chặn đường ngươi."),
           new Line(Mask, "Quỷ Vương ra được khỏi cổng ư? Vậy thì ai đang ở bên trong?"),
         },
@@ -227,7 +227,7 @@ namespace BachYeu {
       if ((t & Twist.Fog) != 0) parts.Add(longForm ? "Sương dày: chỉ nhìn được gần" : "Sương dày");
       if ((t & Twist.InkRain) != 0) parts.Add(longForm ? "Mưa mực: vòng mực rơi theo người chơi" : "Mưa mực");
       if ((t & Twist.Swarm) != 0) parts.Add(longForm ? "Yêu quái kéo đàn: sinh nhanh và đông hơn" : "Yêu quái kéo đàn");
-      if ((t & Twist.Elites) != 0) parts.Add(longForm ? "Đầu đàn: Ô yêu đầu đàn có mặt từ đầu" : "Đầu đàn");
+      if ((t & Twist.Elites) != 0) parts.Add(longForm ? "Đầu đàn: Rương tham có mặt từ đầu" : "Đầu đàn");
       if ((t & Twist.Fury) != 0) parts.Add(longForm ? "Nổi giận: boss nổi giận ngay từ đầu, máu dày hơn" : "Boss nổi giận");
       return string.Join(" · ", parts);
     }

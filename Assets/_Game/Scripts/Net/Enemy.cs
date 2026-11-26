@@ -14,6 +14,9 @@ namespace BachYeu {
     [Networked] public int Hp { get; set; }
     [Networked] public int MaxHp { get; set; }
     [Networked] public NetworkBool Rage { get; set; }
+    /// <summary>Goes up each time the yokai starts an attack; every client plays the Attack animation when it changes.</summary>
+    [Networked] public byte AtkSeq { get; set; }
+    byte _atkSeen;
 
     public bool Alive => Object != null && Object.IsValid && Hp > 0 && _age > .5f;
     public float Radius => EnemyStats.Radius(Type);
@@ -71,13 +74,18 @@ namespace BachYeu {
       if (HasStateAuthority) _mover = GroundMover.Attach(gameObject, Mathf.Min(Radius, 1.2f), Type == EnemyType.King ? 3.2f : IsBoss ? 2.4f : 1.6f);
       if (Type == EnemyType.King) _atkT = 2.5f;
       if (!ArtSet.Play(IsBoss ? GameFx.BossSpawn : GameFx.EnemySpawn, transform.position) && Fx.I) Fx.I.Burst(transform.position + Vector3.up * .5f, Fx.Ink, 8, 2);
-      if (Type == EnemyType.Wisp && ArtSet.Attach(GameFx.WispAura, transform) && _model) _model.gameObject.SetActive(false);
+      // The wisp aura replaces the built-in flame; a bought model (Mắt Trơi) stays visible inside it.
+      if (Type == EnemyType.Wisp && ArtSet.Attach(GameFx.WispAura, transform) && _model && !_custom) _model.gameObject.SetActive(false);
       if (IsBoss) ArtSet.Attach(GameFx.BossAura, transform);
     }
 
     public override void Despawned(NetworkRunner runner, bool hasState) {
       All.Remove(this);
       if (hasState && Hp <= 0) Bestiary.NoteSlain(Type);
+      // Bought models fall over: the model is left behind as a corpse that plays its death clip, then sinks away.
+      // Not for Tiểu quỷ pháo (it blew itself up) or a Bóng không đèn that was still hidden.
+      if (((hasState && Hp <= 0) || _slain) && _custom && _model && Type != EnemyType.Firecracker && AnimUtil.HasParam(_anim, "Die") && (Type != EnemyType.Shade || _shadeShown))
+        EnemyCorpse.Leave(_model, _anim);
       if (!ArtSet.Play(IsBoss ? GameFx.BossDeath : GameFx.EnemyDeath, transform.position) && Fx.I) {
         Fx.I.Burst(transform.position + Vector3.up, IsBoss ? Gfx.Hex("#6b4a8a") : Fx.Ink, IsBoss ? 60 : 16, IsBoss ? 6 : 3.5f);
         Fx.I.Burst(transform.position + Vector3.up, Fx.I.PetalColor, 8, 3);
@@ -99,7 +107,9 @@ namespace BachYeu {
         dir.OnEnemyDamaged(this, dmg + Mathf.Min(0, Hp), from);
         if (killed) dir.OnEnemyKilled(this, from);
       }
-      if (killed) Runner.Despawn(Object);
+      // Not despawned at once: it lies dead for a few ticks so every machine sees Hp reach 0 (and leaves a corpse)
+      // before the despawn arrives. If this kill ended the hour or the night, the cleanup has despawned it already.
+      if (killed) _deadT = DeadLinger;
     }
 
     /// <summary>Pull or push without damage (used by the tornado).</summary>
@@ -109,6 +119,15 @@ namespace BachYeu {
     }
 
     /// <summary>Called on every client by the director when this enemy is hit.</summary>
+    /// <summary>
+    /// Told by the hit RPC that this blow killed it. Other machines may see the despawn before the Hp change,
+    /// so this (not Hp) is how they know to leave a corpse rather than vanish (a phase-end cleanup).
+    /// </summary>
+    bool _slain;
+    const float DeadLinger = .2f;
+    float _deadT;
+    public void MarkSlain() => _slain = true;
+
     public void PlayHitFlash() {
       _flash = .08f;
       AnimUtil.Trigger(_anim, "Hit");
@@ -118,6 +137,11 @@ namespace BachYeu {
     public override void FixedUpdateNetwork() {
       if (!HasStateAuthority) return;
       float dt = Runner.DeltaTime;
+      if (Hp <= 0) { // slain, waiting out DeadLinger: no moving, no hitting
+        _deadT -= dt;
+        if (_deadT <= 0 && Object && Object.IsValid) Runner.Despawn(Object);
+        return;
+      }
       _age += dt;
       if (_age < .5f) return;
       var director = GameDirector.Instance;
@@ -150,7 +174,7 @@ namespace BachYeu {
             if (_atkT <= 0 && dist < 10f) {
               _atkT = Rage ? 1.9f : 2.7f;
               var at = target.transform.position + new Vector3(Random.Range(-.6f, .6f), 0, Random.Range(-.6f, .6f));
-              director.Telegraph(at, 1.3f, 1.05f, 10);
+              AtkSeq++; director.Telegraph(at, 1.3f, 1.05f, 10);
             }
           }
           break;
@@ -162,7 +186,7 @@ namespace BachYeu {
         case EnemyType.Firecracker: // Pháo yêu: runs in, lights its fuse, and blows up (taking itself with it)
           if (_st == AiState.Move) {
             if (target) p += n * spd * dt;
-            if (target && dist < 1.7f) { _st = AiState.Wind; _stT = .9f; director.Telegraph(p, 2.2f, .9f, 20); }
+            if (target && dist < 1.7f) { _st = AiState.Wind; _stT = .9f; AtkSeq++; director.Telegraph(p, 2.2f, .9f, 20); }
           } else {
             face = false;
             _stT -= dt;
@@ -196,7 +220,7 @@ namespace BachYeu {
             if (target) p += n * spd * dt;
             if (target && dist < 2.7f) {
               _st = AiState.Wind; _stT = 1f;
-              director.Telegraph(p, 2.5f, .95f, 18);
+              AtkSeq++; director.Telegraph(p, 2.5f, .95f, 18);
             }
           } else {
             _stT -= dt;
@@ -209,13 +233,13 @@ namespace BachYeu {
           break;
 
         case EnemyType.Cat:
-          if (!Rage && Hp < MaxHp / 2) { Rage = true; director.RPC_Banner("!", "Miêu yêu nổi giận", "Lao tới nhanh hơn, gọi thêm đèn ma"); }
+          if (!Rage && Hp < MaxHp / 2) { Rage = true; director.RPC_Banner("!", "Hỏa Khuyển nổi giận", "Lao tới nhanh hơn, gọi thêm dơi đèn"); }
           if (_st == AiState.Move) {
             if (target && dist > 2.4f) p += n * spd * dt;
             _atkT -= dt;
             if (_atkT <= 0 && target) {
               _st = AiState.Aim; _stT = Rage ? .65f : .9f; _chargeDir = n;
-              director.RPC_TeleLine(p, n, 10.5f, 2.4f, _stT);
+              AtkSeq++; director.RPC_TeleLine(p, n, 10.5f, 2.4f, _stT);
             }
           } else if (_st == AiState.Aim) {
             face = false;
@@ -254,11 +278,11 @@ namespace BachYeu {
               int count = Rage ? 5 : 3;
               for (int i = 0; i < count; i++) {
                 var tp = target.transform.position + (i == 0 ? Vector3.zero : new Vector3(Random.Range(-3.5f, 3.5f), 0, Random.Range(-3.5f, 3.5f)));
-                director.Telegraph(tp, 1.9f, 1.1f + i * .08f, 16);
+                AtkSeq++; director.Telegraph(tp, 1.9f, 1.1f + i * .08f, 16);
               }
             } else if (r < .75f) {
               _st = AiState.Cast; _stT = 1.35f;
-              director.Telegraph(p, 5.4f, 1.3f, 22);
+              AtkSeq++; director.Telegraph(p, 5.4f, 1.3f, 22);
             } else {
               for (int i = 0; i < 3; i++)
                 director.SpawnEnemy(Random.value < .5f ? EnemyType.Ghost : EnemyType.Umbrella, p + new Vector3(Random.Range(-4f, 4f), 0, Random.Range(-4f, 4f)));
@@ -290,7 +314,7 @@ namespace BachYeu {
 
       // Contact damage.
       if (target && EnemyStats.Contact(Type) > 0 && _st != AiState.Wind && _hitCd <= 0 && dist < Radius + .5f) {
-        target.RPC_Hurt(EnemyStats.Contact(Type));
+        AtkSeq++; target.RPC_Hurt(EnemyStats.Contact(Type));
         _hitCd = 1f;
       }
     }
@@ -299,7 +323,7 @@ namespace BachYeu {
     Renderer[] _shadeParts;
     bool _shadeShown = true;
     void UpdateShade() {
-      if (_shadeParts == null) _shadeParts = System.Array.FindAll(_model.GetComponentsInChildren<Renderer>(true), r => r.name != "Shadow");
+      if (_shadeParts == null) _shadeParts = System.Array.FindAll(_model.GetComponentsInChildren<Renderer>(true), r => r.name != "Shadow" && r.enabled); // rig helpers stay off
       var me = PlayerAvatar.Local;
       bool show = _flash > 0 || (me && Fx.Flat(me.transform.position, transform.position) < 4.5f) || Hp <= 0;
       if (show == _shadeShown) return;
@@ -320,15 +344,16 @@ namespace BachYeu {
       _lastPos = pos;
       _bob += dt;
       AnimUtil.Float(_anim, "Speed", speed);
+      if (AtkSeq != _atkSeen) { _atkSeen = AtkSeq; AnimUtil.Trigger(_anim, "Attack"); }
       float y = 0;
       if (!_custom || !AnimUtil.HasParam(_anim, "Speed")) {
         if (Type == EnemyType.Ghost) y = .15f + Mathf.Sin(_bob * 3) * .15f;
         else if (Type == EnemyType.King) y = Mathf.Sin(_bob * 1.6f) * .2f;
         else if ((Type == EnemyType.Umbrella || Type == EnemyType.Elite) && speed > 1f) y = Mathf.Abs(Mathf.Sin(_bob * 7.5f)) * .7f;
       }
-      if (Type == EnemyType.Firecracker && !_custom && _st == AiState.Wind) y = Mathf.Abs(Mathf.Sin(_bob * 30f)) * .12f; // shaking before the blast
+      if (Type == EnemyType.Firecracker && _st == AiState.Wind) y = Mathf.Abs(Mathf.Sin(_bob * 30f)) * .12f; // shaking before the blast
       _model.localPosition = new Vector3(0, y, 0);
-      if (Type == EnemyType.Shade && !_custom) UpdateShade();
+      if (Type == EnemyType.Shade) UpdateShade(); // custom models: keep a child named "Shadow" to show while hidden
 
       if (_custom) { if (_flash > 0) _flash -= dt; return; }
       if (_flash > 0) {

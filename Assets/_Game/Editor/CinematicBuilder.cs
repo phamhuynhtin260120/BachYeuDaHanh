@@ -19,6 +19,11 @@ namespace BachYeu.EditorTools {
       BuildTrailer();
       BuildWin();
       BuildLose();
+      BuildMenuStart();
+      BuildMenuHub();
+      BuildHubVignettes();
+      BuildResultWin();
+      BuildResultLose();
       AssetDatabase.SaveAssets();
       AssetDatabase.Refresh();
       Debug.Log("[Bách Yêu] Đã tạo phim Timeline: Trailer, Win, Lose trong " + Dir);
@@ -49,11 +54,11 @@ namespace BachYeu.EditorTools {
       a.Style = style; a.Title = title; a.Sub = sub;
     }
 
-    static void Fx(CineFxTrack t, double start, GameFx kind, Vector3 at, SoundId sound, float scale = 1) {
+    static void Fx(CineFxTrack t, double start, GameFx kind, Vector3 at, SoundId sound, float scale = 1, bool silent = false) {
       var c = t.CreateClip<CineFxClip>();
       c.start = start; c.duration = .5; c.displayName = kind.ToString();
       var a = (CineFxClip)c.asset;
-      a.Kind = kind; a.Offset = at; a.Sound = sound; a.Scale = scale;
+      a.Kind = kind; a.Offset = at; a.Sound = sound; a.Scale = scale; a.PlaySound = !silent;
     }
 
     static void Prop(CinePropTrack t, double start, double dur, PropKind kind, int id, Vector3 at, float yaw = 180, float scale = 1, bool bob = true) {
@@ -94,14 +99,14 @@ namespace BachYeu.EditorTools {
       Caption(caps, 4.3, 3.4, CaptionStyle.Lower, "Đến giờ Tuất, lồng đèn đỏ dần như máu", "");
 
       // 3. The yokai come.
-      Shot(shots, 8, 4, new Vector3(0, 3.2f, -1.5f), new Vector3(0, 1, 7), new Vector3(0, 2.2f, 2.8f), new Vector3(0, 1.2f, 8), 44, 0, "Yêu quái kéo đến");
+      Shot(shots, 8, 4, new Vector3(0, 3.4f, -.8f), new Vector3(0, 1, 7), new Vector3(0, 2.6f, 1.8f), new Vector3(0, 1.2f, 8), 58, 0, "Yêu quái kéo đến"); // wide lens: the bought models are wider; stays past the lotus pond
       Prop(props, 8, 4, PropKind.Yokai, (int)EnemyType.Ghost, new Vector3(-2.4f, 0, 6.5f), 180);
       Prop(props2, 8, 4, PropKind.Yokai, (int)EnemyType.Umbrella, new Vector3(2.4f, 0, 6.8f), 190);
       Prop(props, 8.4, 3.6, PropKind.Yokai, (int)EnemyType.Heavy, new Vector3(0, 0, 9.5f), 180, 1, false);
       Fx(fx, 8.1, GameFx.EnemySpawn, new Vector3(-2.4f, 0, 6.5f), SoundId.EnemySpawn);
       Fx(fx, 8.3, GameFx.EnemySpawn, new Vector3(2.4f, 0, 6.8f), SoundId.EnemySpawn);
       Fx(fx, 8.5, GameFx.EnemySpawn, new Vector3(0, 0, 9.5f), SoundId.EnemySpawn);
-      Caption(caps, 8.3, 3.4, CaptionStyle.Lower, "Trăm yêu quái kéo về phố", "Lồng đèn ma, ô giấy một mắt, yêu to khỏe...");
+      Caption(caps, 8.3, 3.4, CaptionStyle.Lower, "Trăm yêu quái kéo về phố", "Dơi đèn, thạch yêu, gấu tinh...");
 
       // 4. The four masks.
       Shot(shots, 12, 4, new Vector3(0, 1.9f, -12.5f), new Vector3(0, 1.1f, -4), new Vector3(0, 1.7f, -10.5f), new Vector3(0, 1f, -4), 36, 0, "Bốn mặt nạ");
@@ -118,6 +123,87 @@ namespace BachYeu.EditorTools {
       Shot(shots, 20, 4, new Vector3(0, 6, -13), new Vector3(0, 3, 0), new Vector3(0, 14, -19), new Vector3(0, 2, 0), 40, 0, "Tựa phim");
       Caption(caps, 20.3, 3.7, CaptionStyle.Card, "Bách Yêu\nDạ Hành", "Đêm hội Hồng Đăng · 1 đến 4 người");
       Fade(fade, 23.2, .8, 0, 1);
+    }
+
+    // ---------------- Menu backdrops (looping, anchor: arena centre) ----------------
+    // Played behind the menu by Cinematic.PlayBackdrop: no captions or fades, silent effects, and each film ends on
+    // the shot it starts with so the loop does not jump.
+
+    /// <summary>
+    /// Start screen, 48 s: a grand tour of the valley. High over the whole arena, down past the tea pavilion and its
+    /// bridge, across to the waterfall falling off the floating rock, and back up to where it began (seamless loop).
+    /// </summary>
+    static void BuildMenuStart() {
+      var tl = New("MenuStart");
+      var shots = tl.CreateTrack<CineShotTrack>(null, "Cảnh quay");
+      var fx = tl.CreateTrack<CineFxTrack>(null, "Hiệu ứng");
+      var props = tl.CreateTrack<CinePropTrack>(null, "Đạo cụ");
+      Vector3 high = new(0, 45, -60), highL = new(0, 0, 10);
+      Vector3 tea = new(40, 5, 22), teaL = new(62, 1, -4);
+      Vector3 fall = new(8, 7, -28), fallL = new(-45, 9, -64);
+      Vector3 pond = new(-12, 11, -17), pondL = new(0, 1, 4);
+      Shot(shots, 0, 12, high, highL, tea, teaL, 50, 0, "Toàn cảnh → Đình trà");
+      Shot(shots, 12, 12, tea, teaL, fall, fallL, 52, 0, "Đình trà → Thác nước");
+      Shot(shots, 24, 12, fall, fallL, pond, pondL, 50, 0, "Thác nước → Hồ sen");
+      Shot(shots, 36, 12, pond, pondL, high, highL, 50, 0, "Hồ sen → Toàn cảnh");
+      foreach (var (t, at) in new[] { (38.0, new Vector3(-7, 0, 3)), (42.0, new Vector3(7, 0, 4)), (45.0, new Vector3(0, 0, 10)) })
+        Fx(fx, t, GameFx.LanternLit, at, SoundId.LanternLit, 1, true);
+      Prop(props, 26, 10, PropKind.Yokai, (int)EnemyType.Ghost, new Vector3(-6, 6, -40), 230);
+    }
+
+    /// <summary>
+    /// Extra hub backdrops, 24 s each: the hub picks a different one each time it opens, so the place behind the hero
+    /// changes (the MenuHub film by the lotus pond is the first of them). Each drifts out and back for a clean loop.
+    /// </summary>
+    static void BuildHubVignettes() {
+      Vignette("MenuHub_DinhTra", new(44, 2.6f, 19), new(49, 3.2f, 15), new(62, 1, -4), 50);   // tea pavilion by the wooden bridge
+      Vignette("MenuHub_DinhTung", new(-6, 4, 22), new(-13, 3.4f, 27), new(3, 5.5f, 45), 50);  // two-tier pavilion under the old pine
+      Vignette("MenuHub_ThacNuoc", new(18, 4, -22), new(10, 5, -16), new(-30, 15, -66), 58); // wider, tilted up: the floating rock shows beside the hero     // waterfall off the floating rock
+    }
+
+    static void Vignette(string name, Vector3 a, Vector3 b, Vector3 look, float fov) {
+      var tl = New(name);
+      var shots = tl.CreateTrack<CineShotTrack>(null, "Cảnh quay");
+      Shot(shots, 0, 12, a, look, b, look + new Vector3(0, .4f, 0), fov, 0, "Đi");
+      Shot(shots, 12, 12, b, look + new Vector3(0, .4f, 0), a, look, fov, 0, "Về");
+    }
+
+    /// <summary>Hub, 24 s: a gentle sway beside the lotus pond, out and back (the hero stands in front, in the UI).</summary>
+    static void BuildMenuHub() {
+      var tl = New("MenuHub");
+      var shots = tl.CreateTrack<CineShotTrack>(null, "Cảnh quay");
+      var fx = tl.CreateTrack<CineFxTrack>(null, "Hiệu ứng");
+      Vector3 a = new(-4, 3.2f, -12), la = new(1.5f, 1.8f, 4), b = new(-1.5f, 3.6f, -11.2f), lb = new(2.5f, 1.8f, 4.5f);
+      Shot(shots, 0, 12, a, la, b, lb, 46, 0, "Đi");
+      Shot(shots, 12, 12, b, lb, a, la, 46, 0, "Về");
+      Fx(fx, 4, GameFx.LanternLit, new Vector3(7, 0, 4), SoundId.LanternLit, .8f, true);
+      Fx(fx, 16, GameFx.LanternLit, new Vector3(-7, 0, 3), SoundId.LanternLit, .8f, true);
+    }
+
+    /// <summary>
+    /// Behind the win result, 20 s loop, anchor: the local player (+Z toward the arena centre). The camera circles
+    /// the player at a respectful distance in four legs, lanterns flare around them now and then.
+    /// </summary>
+    static void BuildResultWin() {
+      var tl = New("ResultWin");
+      var shots = tl.CreateTrack<CineShotTrack>(null, "Cảnh quay");
+      var fx = tl.CreateTrack<CineFxTrack>(null, "Hiệu ứng");
+      var look = new Vector3(0, 1.1f, 0);
+      Vector3 P(float deg) { float r = deg * Mathf.Deg2Rad; return new Vector3(Mathf.Sin(r) * 6.5f, 2.4f, Mathf.Cos(r) * 6.5f); }
+      float[] ring = { 200, 250, 300, 250 }; // sway across the outer side and back (the pond stays behind the player)
+      for (int i = 0; i < 4; i++) Shot(shots, i * 5, 5, P(ring[i]), look, P(ring[(i + 1) % 4]), look, 40, 0, "Vòng " + (i + 1));
+      Fx(fx, 2, GameFx.LanternLit, new Vector3(2.4f, 0, 2.2f), SoundId.LanternLit, 1, true);
+      Fx(fx, 8, GameFx.LanternLit, new Vector3(-2.4f, 0, 2.6f), SoundId.LanternLit, 1, true);
+      Fx(fx, 14, GameFx.LanternLit, new Vector3(0, 0, 3.6f), SoundId.LanternLit, 1, true);
+    }
+
+    /// <summary>Behind the lose result, 20 s loop, anchor: the local player. High and still, a slow drift over the fallen night.</summary>
+    static void BuildResultLose() {
+      var tl = New("ResultLose");
+      var shots = tl.CreateTrack<CineShotTrack>(null, "Cảnh quay");
+      Vector3 a = new(.8f, 10, -6.5f), b = new(-1.6f, 9.4f, -7.2f), look = new(0, 0, 1.5f);
+      Shot(shots, 0, 10, a, look, b, look, 44, 0, "Trôi");
+      Shot(shots, 10, 10, b, look, a, look, 44, 0, "Trôi về");
     }
 
     // ---------------- Win (about 4.5 s, anchor: local player) ----------------

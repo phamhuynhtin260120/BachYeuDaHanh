@@ -17,12 +17,20 @@ namespace BachYeu {
     public static int FpsIndex { get; private set; } = 1;
     public static bool Vibrate { get; private set; } = true;
     public static bool ScreenShake { get; private set; } = true;
+    /// <summary>Nét quái: how the yokai are painted, 0 = light ink, .5 = default, 1 = bold colors and thick outline.</summary>
+    public static float InkStyle { get; private set; } = .5f;
+    public static readonly string[] InkStyleNames = { "Nhạt", "Vừa", "Đậm" };
+    public static readonly float[] InkStylePresets = { 0f, .5f, 1f };
+    /// <summary>Giao diện: which UI skin UiKit paints with.</summary>
+    public const int SkinInk = 0, SkinCoPhong = 1, SkinTienCanh = 2;
+    public static readonly string[] SkinNames = { "Thuỷ mặc", "Cổ phong", "Tiên cảnh" };
+    public static int Skin { get; private set; } = SkinInk;
 
     /// <summary>Raised after any option changes (the audio system listens to it).</summary>
     public static event Action Changed;
 
     const string KMusic = "byd.set.music", KSfx = "byd.set.sfx", KQuality = "byd.set.quality", KFps = "byd.set.fps",
-      KVibrate = "byd.set.vibrate", KShake = "byd.set.shake";
+      KVibrate = "byd.set.vibrate", KShake = "byd.set.shake", KInk = "byd.set.inkstyle", KSkin = "byd.set.skin";
 
     static bool _loaded;
 
@@ -38,6 +46,9 @@ namespace BachYeu {
       FpsIndex = Mathf.Clamp(PlayerPrefs.GetInt(KFps, 1), 0, 1);
       Vibrate = PlayerPrefs.GetInt(KVibrate, 1) == 1;
       ScreenShake = PlayerPrefs.GetInt(KShake, 1) == 1;
+      InkStyle = Mathf.Clamp01(PlayerPrefs.GetFloat(KInk, .5f));
+      Skin = Mathf.Clamp(PlayerPrefs.GetInt(KSkin, SkinInk), 0, 2);
+      ApplyInkStyle();
       Application.quitting += RestoreRenderAsset;
       ApplyGraphics();
     }
@@ -48,7 +59,23 @@ namespace BachYeu {
     public static void SetFps(int i) { FpsIndex = Mathf.Clamp(i, 0, 1); PlayerPrefs.SetInt(KFps, FpsIndex); ApplyGraphics(); Changed?.Invoke(); }
     public static void SetVibrate(bool on) { Vibrate = on; PlayerPrefs.SetInt(KVibrate, on ? 1 : 0); Changed?.Invoke(); }
     public static void SetScreenShake(bool on) { ScreenShake = on; PlayerPrefs.SetInt(KShake, on ? 1 : 0); Changed?.Invoke(); }
+    public static void SetInkStyle(float v) { InkStyle = Mathf.Clamp01(v); PlayerPrefs.SetFloat(KInk, InkStyle); ApplyInkStyle(); Changed?.Invoke(); }
+    /// <summary>Switch UI skin: sprites are reloaded; screens built from now on use it (open menus rebuild themselves).</summary>
+    public static void SetSkin(int s) {
+      s = Mathf.Clamp(s, 0, 2);
+      if (s == Skin) return;
+      Skin = s; PlayerPrefs.SetInt(KSkin, s);
+      UiKit.ResetInk();
+      Changed?.Invoke();
+    }
     public static void Save() => PlayerPrefs.Save();
+
+    /// <summary>Name of the nearest preset, for the label next to the slider.</summary>
+    public static string InkStyleName(float v) => InkStyleNames[Mathf.Clamp(Mathf.RoundToInt(v * 2), 0, 2)];
+
+    // The BachYeu/InkCharacter shader reads one global: -1 light .. 0 default .. +1 bold.
+    static readonly int InkStyleId = Shader.PropertyToID("_InkStyle");
+    static void ApplyInkStyle() => Shader.SetGlobalFloat(InkStyleId, InkStyle * 2f - 1f);
 
     /// <summary>Short phone buzz, if the player allows it. Throttled so a swarm does not buzz non-stop.</summary>
     public static void Buzz() {

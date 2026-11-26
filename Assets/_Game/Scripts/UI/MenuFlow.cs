@@ -13,7 +13,7 @@ namespace BachYeu {
   public class MenuFlow : MonoBehaviour {
     public static MenuFlow Current { get; private set; }
     static bool _startSeen;
-    public static void ResetSession() => _startSeen = false;
+    public static void ResetSession() { _startSeen = false; _hubPlace = -1; }
 
     GameLauncher _launcher;
     RectTransform _root, _start, _hub, _room;
@@ -26,14 +26,45 @@ namespace BachYeu {
       f._launcher = launcher;
       f._root = (RectTransform)canvas.transform;
       Current = f;
-      UiKit.Backdrop(f._root, "Backdrop", "MenuBg");
+      f._backdrop = UiKit.Backdrop(f._root, "Backdrop", "MenuBg").gameObject;
       if (_startSeen) f.GoHub(); else f.GoStart();
       LoadingScreen.Hide(.15f);
     }
 
     public static void Hide() { if (Current) Destroy(Current.gameObject); }
 
+    /// <summary>Build the menu again (after the UI skin changes).</summary>
+    public static void Rebuild() { if (Current) Show(Current._launcher); }
+
+    GameObject _backdrop;
+
+    // Places the hub backdrop can show; each time the hub opens it moves on to another one.
+    static readonly (string film, string name)[] HubPlaces = {
+      ("MenuHub", "Hồ sen giữa phố"), ("MenuHub_DinhTra", "Đình trà bên cầu gỗ"),
+      ("MenuHub_DinhTung", "Đình cổ dưới gốc tùng"), ("MenuHub_ThacNuoc", "Thác nước đảo bay"),
+    };
+    static int _hubPlace = -1;
+
+    static (string film, string name) NextHubPlace() {
+      int n = HubPlaces.Length;
+      int pick = _hubPlace < 0 ? UnityEngine.Random.Range(0, n) : (_hubPlace + 1 + UnityEngine.Random.Range(0, n - 1)) % n; // never the same twice in a row
+      for (int i = 0; i < n; i++, pick = (pick + 1) % n)
+        if (Resources.Load<UnityEngine.Timeline.TimelineAsset>(Cinematic.Folder + HubPlaces[pick].film)) break;
+      _hubPlace = pick;
+      return HubPlaces[pick];
+    }
+
+    /// <summary>
+    /// Living background: loop a Timeline film over the real arena behind the menu (Resources/Cinematics/<paramref name="film"/>).
+    /// The painted backdrop only shows if the film is missing.
+    /// </summary>
+    void LiveBackdrop(string film) {
+      bool live = Cinematic.PlayBackdrop(film);
+      if (_backdrop) _backdrop.SetActive(!live);
+    }
+
     void OnDestroy() {
+      Cinematic.StopBackdrop();
       if (Current == this) Current = null;
       if (_launcher) _launcher.StatusSink = null;
     }
@@ -59,12 +90,15 @@ namespace BachYeu {
     void GoStart() {
       Clear();
       _start = Screen("StartScreen");
+      LiveBackdrop("MenuStart");
       var title = UiKit.LabelAt(_start, "Bách Yêu\nDạ Hành", 150, UiKit.InkBlack, C, C, new Vector2(-40, 90), new Vector2(1100, 360), TextAnchor.MiddleCenter, FontStyle.Bold);
       title.lineSpacing = .85f;
       title.gameObject.AddComponent<Outline>().effectColor = new Color(.97f, .96f, .94f, .85f);
       UiKit.SealTag(_start, "Seal", "Dạ", C, C, new Vector2(360, 190), new Vector2(84, 84), UiKit.Seal, true, 38);
-      UiKit.LabelAt(_start, "Đêm hội Hồng Đăng · 1 đến 4 người", 28, UiKit.InkGrey, C, C, new Vector2(0, -120), new Vector2(900, 40), TextAnchor.MiddleCenter, FontStyle.Bold);
-      _tap = UiKit.LabelAt(_start, "Chạm để bắt đầu", 34, UiKit.Seal, BC, BC, new Vector2(0, 150), new Vector2(800, 50), TextAnchor.MiddleCenter, FontStyle.Bold);
+      var tagline = UiKit.LabelAt(_start, "Đêm hội Hồng Đăng · 1 đến 4 người", 30, UiKit.InkBlack, C, C, new Vector2(0, -120), new Vector2(900, 44), TextAnchor.MiddleCenter, FontStyle.Bold);
+      _tap = UiKit.LabelAt(_start, "Chạm để bắt đầu", 38, UiKit.Seal, BC, BC, new Vector2(0, 150), new Vector2(800, 54), TextAnchor.MiddleCenter, FontStyle.Bold);
+      // Over the living 3D backdrop: a paper-coloured edge keeps the small lines readable.
+      foreach (var t in new[] { tagline, _tap }) { var o = t.gameObject.AddComponent<Outline>(); o.effectColor = new Color(.97f, .95f, .9f, .9f); o.effectDistance = new Vector2(2, -2); }
       UiKit.LabelAt(_start, "Phiên bản " + Application.version + " · Thuỷ mặc phố đèn", 18, UiKit.InkGrey, BR, BR, new Vector2(-30, 20), new Vector2(600, 28), TextAnchor.MiddleRight);
       UiKit.InkButton(_start, "Xem giới thiệu", BL, BL, new Vector2(30, 24), new Vector2(240, 60), false, PlayTrailer, 20).name = "Trailer";
       _idle = 0;
@@ -117,69 +151,131 @@ namespace BachYeu {
     }
 
     // ================= Sảnh chính =================
-    Text _hubName, _hubTitle, _hubCoins, _journeySub, _hubStatus;
+    // Game-style hub: the hero in the middle of the stage, icon tiles down the left, profile and Hồn đăng on top,
+    // and on the right the chosen mode's banner, three mode chips and one big "Bắt đầu" button.
+    Text _hubName, _hubTitle, _hubCoins, _journeySub, _hubStatus, _bannerTitle, _bannerHint;
     GameObject _questDot;
+    Button[] _modeChips;
+    int _hubMode;
+    Image _bannerIcon;
+
+    static readonly string[] ModeNames = { "Hành trình", "Tranh Đăng", "Vào phòng" };
+    static readonly string[] ModeIcons = { "journey", "contest", "room" };
 
     void GoHub() {
       Clear();
       _hub = Screen("Hub");
+      var place = NextHubPlace();
+      LiveBackdrop(place.film);
       _launcher.StatusSink = s => { if (_hubStatus) _hubStatus.text = s; };
+      bool cp = UiKit.CoPhong;
+      var th = UiKit.Theme; var gold = th.Gold;
 
-      // Logo, top-left.
-      var logo = UiKit.LabelAt(_hub, "Bách Yêu Dạ Hành", 60, UiKit.InkBlack, TL, TL, new Vector2(230, -36), new Vector2(640, 80), TextAnchor.MiddleLeft, FontStyle.Bold);
-      logo.gameObject.AddComponent<Outline>().effectColor = new Color(.97f, .96f, .94f, .8f);
-      UiKit.LabelAt(_hub, "Đêm hội Hồng Đăng", 22, UiKit.InkGrey, TL, TL, new Vector2(234, -112), new Vector2(500, 30), TextAnchor.MiddleLeft, FontStyle.Bold);
+      // ---- Profile, top-left: round portrait (tap to rename), name, title.
+      var portrait = UiKit.InkImage(_hub, "Portrait", "InkDot", TL, TL, new Vector2(28, -18), new Vector2(104, 104), cp ? UiKit.Theme.Rim : UiKit.InkBlack);
+      portrait.raycastTarget = true;
+      var pb = portrait.gameObject.AddComponent<Button>(); pb.onClick.AddListener(Rename);
+      UiKit.InkImage(portrait.transform, "Inner", "InkDot", C, C, Vector2.zero, new Vector2(88, 88), cp ? UiKit.Theme.Deep : UiKit.InkPaper);
+      UiKit.IconImage(portrait.transform, "mask", C, C, Vector2.zero, 62, cp ? gold : UiKit.Seal);
+      _hubName = UiKit.StageLabel(_hub, "", 36, TL, TL, new Vector2(146, -20), new Vector2(420, 50), TextAnchor.MiddleLeft);
+      _hubTitle = UiKit.LabelAt(_hub, "", 20, cp ? gold : Gfx.Hex("#8a6a2e"), TL, TL, new Vector2(148, -70), new Vector2(420, 30), TextAnchor.MiddleLeft, FontStyle.Bold);
+      _hubTitle.gameObject.AddComponent<Outline>().effectColor = cp ? th.Edge : new Color(1, 1, 1, .6f);
 
-      // Profile card, top-right: name (tap to rename), title, Hồn đăng.
-      var card = UiKit.Rect(_hub, "Profile", TR, TR, new Vector2(-40, -32), new Vector2(460, 126));
-      card.gameObject.AddComponent<Image>().color = new Color(.98f, .97f, .94f, .9f);
-      UiKit.InkImage(card, "Rule", "BrushBar", TL, TL, new Vector2(16, -4), new Vector2(428, 6), UiKit.Seal);
-      _hubName = UiKit.LabelAt(card, "", 30, UiKit.InkBlack, TL, TL, new Vector2(22, -16), new Vector2(300, 40), TextAnchor.MiddleLeft, FontStyle.Bold);
-      _hubTitle = UiKit.LabelAt(card, "", 18, Gfx.Hex("#8a6a2e"), TL, TL, new Vector2(22, -56), new Vector2(300, 26), TextAnchor.MiddleLeft, FontStyle.Bold);
-      UiKit.SealTag(card, "Coin", "Hồn", BL, BL, new Vector2(22, 12), new Vector2(46, 36), UiKit.Gold, true, 15);
-      _hubCoins = UiKit.LabelAt(card, "", 24, UiKit.InkBlack, BL, BL, new Vector2(76, 10), new Vector2(200, 40), TextAnchor.MiddleLeft, FontStyle.Bold);
-      UiKit.InkButton(card, "Đổi tên", TR, TR, new Vector2(-14, -20), new Vector2(120, 48), false, Rename, 18).name = "Rename";
+      // ---- Top-right: Hồn đăng pill, help and settings.
+      var pill = UiKit.Rect(_hub, "Coins", TR, TR, new Vector2(-196, -30), new Vector2(270, 62));
+      var pillBg = pill.gameObject.AddComponent<Image>();
+      pillBg.color = cp ? th.Pill : new Color(.98f, .97f, .94f, .92f);
+      UiKit.SkinPanel(pillBg, true);
+      UiKit.IconImage(pill, "lantern", new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(10, 0), 48, cp ? gold : UiKit.Seal);
+      _hubCoins = UiKit.LabelAt(pill, "", 28, cp ? th.Cream : UiKit.InkBlack, new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(64, 0), new Vector2(196, 50), TextAnchor.MiddleLeft, FontStyle.Bold);
+      RoundIcon(_hub, "help", TR, new Vector2(-112, -28), () => HelpPanel.Open());
+      RoundIcon(_hub, "settings", TR, new Vector2(-30, -28), () => SettingsPanel.Open());
 
-      // Three big mode cards, left column.
-      _journeySub = ModeCard(0, "Hành trình", "", "Một mình hoặc cùng bạn · cốt truyện theo chương", true, OpenJourney).Item2;
-      ModeCard(1, "Tranh Đăng", "Hai đội giành lồng đèn · 2 đến 4 người", "Tạo phòng rồi gửi mã cho bạn bè", false, () => OpenRoom(Modes.Contest));
-      ModeCard(2, "Vào phòng bạn", "Nhập mã phòng bạn bè gửi cho bạn", "Chế độ do chủ phòng chọn", false, () => OpenRoom(-1));
-      _hubStatus = UiKit.LabelAt(_hub, "", 20, UiKit.Seal, L, L, new Vector2(76, -330), new Vector2(760, 30), TextAnchor.MiddleLeft, FontStyle.Bold);
-
-      // Bottom bar.
-      string[] names = { "Nhiệm vụ", "Túi pháp khí", "Bách yêu lục", "Thành tựu", "Cách chơi", "Cài đặt" };
-      System.Action[] acts = {
-        () => DailyQuestPanel.Open(RefreshHub), () => BagPanel.Open(RefreshHub), () => BestiaryPanel.Open(RefreshHub),
-        () => AchievementPanel.Open(RefreshHub), () => HelpPanel.Open(), () => SettingsPanel.Open(),
-      };
-      var bar = UiKit.Rect(_hub, "NavBar", BC, BC, new Vector2(0, 22), new Vector2(1340, 80));
-      bar.gameObject.AddComponent<Image>().color = new Color(.98f, .97f, .94f, .75f);
+      // ---- Left column: icon tiles.
+      string[] names = { "Nhiệm vụ", "Túi pháp khí", "Bách yêu lục", "Thành tựu" };
+      string[] icons = { "quest", "bag", "codex", "trophy" };
+      System.Action[] acts = { () => DailyQuestPanel.Open(RefreshHub), () => BagPanel.Open(RefreshHub), () => BestiaryPanel.Open(RefreshHub), () => AchievementPanel.Open(RefreshHub) };
       for (int i = 0; i < names.Length; i++) {
         int k = i;
-        var b = UiKit.InkButton(bar, names[i], L, L, new Vector2(10 + i * 221, 0), new Vector2(210, 64), false, () => acts[k](), 21);
-        b.name = "Nav_" + i;
-        if (i == 0) _questDot = UiKit.SealTag(b.transform, "Dot", "!", TR, C, new Vector2(-12, -8), new Vector2(32, 32), UiKit.Seal, true, 19).gameObject;
+        var tile = IconTile(_hub, icons[i], names[i], TL, new Vector2(46, -170 - i * 158), () => acts[k]());
+        tile.name = "Nav_" + i;
+        if (i == 0) _questDot = UiKit.SealTag(tile.transform, "Dot", "!", TR, C, new Vector2(-6, -6), new Vector2(34, 34), UiKit.Seal, true, 20).gameObject;
       }
+
+      // ---- The hero, centre stage, with a pool of shadow at its feet.
+      UiKit.InkImage(_hub, "HeroShadow", "InkDot", C, C, new Vector2(-90, -318), new Vector2(340, 62), new Color(0, 0, 0, cp ? .45f : .2f));
+      HubHero.Create(_hub, C, new Vector2(-90, -24), new Vector2(520, 720));
+
+      // ---- Right: mode banner, chips, big start button.
+      var banner = UiKit.Rect(_hub, "Banner", TR, TR, new Vector2(-34, -124), new Vector2(520, 220));
+      var bannerBg = banner.gameObject.AddComponent<Image>();
+      bannerBg.color = new Color(.15f, .16f, .16f, .95f);
+      UiKit.SkinPanel(bannerBg, true);
+      _bannerIcon = UiKit.IconImage(banner, "journey", new Vector2(1, .5f), new Vector2(1, .5f), new Vector2(-18, -6), 150, new Color(1, .85f, .5f, .22f));
+      _bannerTitle = UiKit.LabelAt(banner, "", 46, gold, TL, TL, new Vector2(30, -18), new Vector2(460, 60), TextAnchor.MiddleLeft, FontStyle.Bold);
+      _bannerTitle.gameObject.AddComponent<Outline>().effectColor = th.Edge;
+      _journeySub = UiKit.LabelAt(banner, "", 24, th.Cream, TL, TL, new Vector2(32, -86), new Vector2(460, 36), TextAnchor.MiddleLeft, FontStyle.Bold);
+      _bannerHint = UiKit.LabelAt(banner, "", 19, new Color(.95f, .88f, .76f, .85f), TL, TL, new Vector2(32, -128), new Vector2(440, 60), TextAnchor.UpperLeft);
+
+      _modeChips = new Button[3];
+      for (int i = 0; i < 3; i++) {
+        int k = i;
+        _modeChips[i] = UiKit.InkButton(_hub, ModeNames[i], BR, BR, new Vector2(-34 - (2 - i) * 176, 196), new Vector2(166, 62), false, () => { Sfx.Play(SoundId.UiClick); SetHubMode(k); }, 22);
+        _modeChips[i].name = "Mode_" + i;
+      }
+      var start = UiKit.InkButton(_hub, "Bắt đầu", BR, BR, new Vector2(-34, 46), new Vector2(520, 132), true, StartSelected, 52);
+      start.name = "Start";
+      UiKit.IconImage(start.transform, "play", new Vector2(0, .5f), new Vector2(0, .5f), new Vector2(70, 0), 70, cp ? th.Glow : UiKit.InkPaper);
+      _hubStatus = UiKit.StageLabel(_hub, "", 20, BR, BR, new Vector2(-34, 266), new Vector2(520, 30), TextAnchor.MiddleRight);
+      _hubStatus.color = cp ? th.Glow : UiKit.Seal;
+
+      // Where the hero stands tonight (the backdrop film), bottom-left.
+      var where = UiKit.StageLabel(_hub, "Đang ở · " + place.name, 20, BC, BC, new Vector2(-90, 22), new Vector2(560, 30), TextAnchor.MiddleCenter); // under the hero, clear of the icon column
+      where.color = UiKit.CoPhong ? UiKit.Theme.Gold : UiKit.InkBlack;
+
+      SetHubMode(_hubMode);
       RefreshHub();
     }
 
-    (Button, Text) ModeCard(int i, string title, string sub, string hint, bool primary, UnityEngine.Events.UnityAction onClick) {
-      var pos = new Vector2(72, 170 - i * 176);
-      var card = UiKit.Rect(_hub, "Mode_" + title, L, L, pos, new Vector2(620, 158));
-      var bg = card.gameObject.AddComponent<Image>();
-      bg.color = primary ? new Color(.15f, .16f, .16f, .97f) : new Color(.98f, .97f, .94f, .9f);
-      var btn = card.gameObject.AddComponent<Button>();
-      btn.onClick.AddListener(() => { Sfx.Play(SoundId.UiClick); onClick(); });
-      var cb = btn.colors; cb.highlightedColor = new Color(.92f, .92f, .92f); cb.pressedColor = new Color(.8f, .8f, .8f); btn.colors = cb;
-      Color ink = primary ? UiKit.InkPaper : UiKit.InkBlack, soft = primary ? new Color(.85f, .83f, .78f) : UiKit.InkGrey;
-      UiKit.InkImage(card, "Bar", "BrushBar", TL, TL, new Vector2(0, -4), new Vector2(10, 150), primary ? UiKit.Seal : UiKit.Pine).rectTransform.localRotation = Quaternion.identity;
-      UiKit.LabelAt(card, title, 44, ink, TL, TL, new Vector2(34, -14), new Vector2(560, 60), TextAnchor.MiddleLeft, FontStyle.Bold).raycastTarget = false;
-      var s = UiKit.LabelAt(card, sub, 22, primary ? Gfx.Hex("#e9c46a") : UiKit.Seal, TL, TL, new Vector2(36, -78), new Vector2(560, 32), TextAnchor.MiddleLeft, FontStyle.Bold);
-      s.raycastTarget = false;
-      UiKit.LabelAt(card, hint, 18, soft, TL, TL, new Vector2(36, -112), new Vector2(560, 28), TextAnchor.MiddleLeft).raycastTarget = false;
-      UiKit.LabelAt(card, "›", 64, ink, new Vector2(1, .5f), new Vector2(1, .5f), new Vector2(-26, 4), new Vector2(50, 90), TextAnchor.MiddleCenter, FontStyle.Bold).raycastTarget = false;
-      btn.name = "Mode_" + i;
-      return (btn, s);
+    void SetHubMode(int m) {
+      _hubMode = Mathf.Clamp(m, 0, 2);
+      UiKit.SelectSegment(_modeChips, _hubMode);
+      _bannerTitle.text = ModeNames[_hubMode];
+      _bannerIcon.sprite = UiKit.Icon(ModeIcons[_hubMode]);
+      _bannerHint.text = _hubMode switch {
+        0 => "Một mình hoặc cùng bạn · cốt truyện theo chương",
+        1 => "Tạo phòng rồi gửi mã cho bạn bè",
+        _ => "Nhập mã phòng bạn bè gửi cho bạn · chế độ do chủ phòng chọn",
+      };
+      RefreshHub();
+    }
+
+    void StartSelected() {
+      Sfx.Play(SoundId.UiClick);
+      if (_hubMode == 0) OpenJourney();
+      else OpenRoom(_hubMode == 1 ? Modes.Contest : -1);
+    }
+
+    /// <summary>Square icon tile with its name under it (left column).</summary>
+    Button IconTile(RectTransform parent, string icon, string label, Vector2 anchor, Vector2 pos, System.Action act) {
+      // Tiên cảnh: a round glowing jade orb (floating, no box); otherwise a framed square tile.
+      var tile = UiKit.InkImage(parent, "Tile", UiKit.TienCanh ? "Orb" : "Lines", anchor, anchor, pos, new Vector2(108, 108), Color.white);
+      tile.raycastTarget = true;
+      var b = tile.gameObject.AddComponent<Button>();
+      b.onClick.AddListener(() => { Sfx.Play(SoundId.UiClick); act(); });
+      UiKit.IconImage(tile.transform, icon, C, C, new Vector2(0, 2), 70, UiKit.CoPhong ? UiKit.Theme.TileIcon : UiKit.InkBlack);
+      UiKit.StageLabel(tile.transform, label, 20, BC, TC, new Vector2(0, -2), new Vector2(180, 30), TextAnchor.MiddleCenter);
+      return b;
+    }
+
+    void RoundIcon(RectTransform parent, string icon, Vector2 anchor, Vector2 pos, System.Action act) {
+      bool cp = UiKit.CoPhong;
+      var ring = UiKit.InkImage(parent, "Btn_" + icon, "InkDot", anchor, anchor, pos, new Vector2(68, 68), cp ? UiKit.Theme.Rim : UiKit.InkBlack);
+      ring.raycastTarget = true;
+      var b = ring.gameObject.AddComponent<Button>();
+      b.onClick.AddListener(() => { Sfx.Play(SoundId.UiClick); act(); });
+      UiKit.InkImage(ring.transform, "Inner", "InkDot", C, C, Vector2.zero, new Vector2(58, 58), cp ? UiKit.Theme.Deep : UiKit.InkPaper);
+      UiKit.IconImage(ring.transform, icon, C, C, Vector2.zero, 40, cp ? UiKit.Theme.Gold : UiKit.InkBlack);
     }
 
     void RefreshHub() {
@@ -187,10 +283,14 @@ namespace BachYeu {
       _hubName.text = string.IsNullOrEmpty(_launcher.PlayerName) ? "Khách" : _launcher.PlayerName;
       var t = Profile.Data.Title;
       _hubTitle.text = string.IsNullOrEmpty(t) ? $"Thành tựu {Achievements.DoneCount}/{Achievements.All.Length}" : "« " + t + " »";
-      _hubCoins.text = $"{Profile.Coins} Hồn đăng";
+      _hubCoins.text = $"{Profile.Coins}";
       int n = Mathf.Clamp(LocalProfile.Chapter, 1, JourneyMap.FreeNight);
       var ch = Story.Get(n);
-      _journeySub.text = ch != null ? $"Chương {n} · {ch.Title}" : "Đêm tự do";
+      _journeySub.text = _hubMode switch {
+        0 => ch != null ? $"Chương {n} · {ch.Title}" : "Đêm tự do",
+        1 => "Hai đội giành lồng đèn · 2 đến 4 người",
+        _ => "Vào phòng bạn bè",
+      };
       if (_questDot) _questDot.SetActive(Quests.AnythingToClaim);
     }
 
